@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Asset, AssetKind, EgoModel } from "@/lib/insurance/ego";
+import { KBC } from "@/lib/insurance/kbc";
 import type { InsuranceModel, Status } from "@/lib/insurance/model";
 import { EgoMap } from "./EgoMap";
 import { PixelIcon } from "./pixel";
@@ -138,6 +139,36 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
     return others.length > 0 ? [...groups, { label: "Others in the family", ids: others }] : groups;
   }, [ego, model.people, personId]);
 
+  // Alerts are messages, not a place on the map: a bell in the bar, and a section in the panel.
+  const alerts = useMemo(() => {
+    const rank = (a: Asset) => (a.state === "upcoming" ? 0 : a.priority === "high" ? 1 : a.priority === "medium" ? 2 : 3);
+    const all = Object.values(ego.assets).filter((a) => a.kind === "gap").sort((a, b) => rank(a) - rank(b) || a.label.localeCompare(b.label));
+    const mine = all.filter((a) => a.personIds.includes(personId));
+    // The rest of the family, but only what is pressing: Koen looks after his parents as well.
+    const others = all.filter((a) => !a.personIds.includes(personId) && rank(a) <= 1).slice(0, 6);
+    return { mine, others };
+  }, [ego, personId]);
+  const alertCount = alerts.mine.length + alerts.others.length;
+
+  const openAlert = useCallback((a: Asset, e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.currentTarget.closest("details")?.removeAttribute("open");
+    const who = a.personIds[0];
+    const category = KBC.products.find((p) => p.id === a.kbcId)?.category;
+    setView("person");
+    setPersonId(who);
+    setTrail(category ? [{ kind: "category", group: "insurance", id: category }, { kind: "asset", id: a.id }] : [{ kind: "asset", id: a.id }]);
+    setSelectedId(null);
+  }, []);
+
+  // Alerts that belong with what is selected: a category's own, or everything for the person.
+  const panelAlerts = useMemo(() => {
+    if (shown.kind === "category" && shown.id.startsWith("cat:insurance:")) {
+      const cid = shown.id.split(":")[2];
+      return alerts.mine.filter((a) => KBC.products.find((p) => p.id === a.kbcId)?.category === cid);
+    }
+    return shown.id === `person:${personId}` ? alerts.mine : [];
+  }, [shown, alerts.mine, personId]);
+
   return (
     <div className="cw">
       <header className="cw-bar">
@@ -182,6 +213,36 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
           <button type="button" aria-pressed={view === "family"} onClick={() => setView("family")}>Family map</button>
         </div>
         <div className="cw-right">
+          <details className="cw-menu cw-alerts">
+            <summary aria-label={`${alertCount} alerts`}>
+              <PixelIcon id="alert" size={16} /> Alerts
+              {alertCount > 0 ? <span className="cw-badge">{alertCount}</span> : null}
+            </summary>
+            <div>
+              {alertCount === 0 ? <p>Nothing needs attention.</p> : null}
+              {[{ title: `For ${person.name}`, items: alerts.mine }, { title: "Elsewhere in the family", items: alerts.others }]
+                .filter((g) => g.items.length > 0)
+                .map((g) => (
+                  <section key={g.title}>
+                    <h3>{g.title}</h3>
+                    <ul>
+                      {g.items.map((a) => (
+                        <li key={a.id}>
+                          <button type="button" onClick={(e) => openAlert(a, e)}>
+                            <PixelIcon id={a.glyph} size={22} />
+                            <span>
+                              <strong>{a.personIds[0] !== personId ? `${model.people.find((p) => p.id === a.personIds[0])?.name} · ` : ""}{a.label}</strong>
+                              <em className={a.state === "upcoming" ? "cw-soon" : "cw-gap"}>{a.state === "upcoming" ? "Needed soon" : `Gap${a.priority ? ` · ${a.priority}` : ""}`}</em>
+                              <small>{a.detail}</small>
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+            </div>
+          </details>
           <div className="cw-seg" role="group" aria-label="Theme">
             {(["kbc", "dark", "plain"] as Theme[]).map((t) => (
               <button key={t} type="button" aria-pressed={theme === t} onClick={() => setTheme(t)}>{THEME_LABEL[t]}</button>
@@ -243,6 +304,8 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
             <Panel
               asset={shown}
               offer={offer}
+              alerts={panelAlerts}
+              onOpenAlert={(a) => openAlert(a)}
               lookup={lookup}
               state={state}
               personName={person.name}
@@ -280,6 +343,8 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
 function Panel({
   asset,
   offer,
+  alerts,
+  onOpenAlert,
   lookup,
   state,
   personName,
@@ -294,6 +359,8 @@ function Panel({
 }: {
   asset: Asset;
   offer?: Asset;
+  alerts: Asset[];
+  onOpenAlert: (a: Asset) => void;
   lookup: (id: string) => Asset | undefined;
   state: Asset["state"];
   personName: string;
@@ -321,6 +388,26 @@ function Panel({
       ) : null}
       {canSwitch ? (
         <button type="button" className="cw-open" onClick={onOpen}>Look at {asset.label}'s cover</button>
+      ) : null}
+
+      {alerts.length > 0 ? (
+        <section className="cw-alert-list">
+          <h3>{alerts.length} {alerts.length === 1 ? "alert" : "alerts"}</h3>
+          <ul>
+            {alerts.map((a) => (
+              <li key={a.id}>
+                <button type="button" onClick={() => onOpenAlert(a)}>
+                  <PixelIcon id={a.glyph} size={22} />
+                  <span>
+                    <strong>{a.label}</strong>
+                    <em className={a.state === "upcoming" ? "cw-soon" : "cw-gap"}>{a.state === "upcoming" ? "Needed soon" : `Gap${a.priority ? ` · ${a.priority}` : ""}`}</em>
+                    <small>{a.detail}</small>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {offer?.product ? (

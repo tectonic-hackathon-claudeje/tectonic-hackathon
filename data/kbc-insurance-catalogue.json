@@ -1,5 +1,5 @@
 {
-  "source": "KBC insurance grouping agreed by the team (mock data, not an official KBC price list).",
+  "source": "Generated from data/kbc_insurance_catalogue.csv (the team's KBC grouping). Mock data, not an official KBC price list.",
   "categories": [
     {
       "id": "home",

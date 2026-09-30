@@ -14,7 +14,7 @@ export type SceneNode = {
   /** A group or category: one picture standing for several things. */
   large?: boolean;
 };
-export type Side = "n" | "e" | "s" | "w" | "s2";
+export type Side = "n" | "e" | "s" | "w" | "s2" | "ne" | "nw" | "se" | "sw";
 /** `bare` territories hold one picture with its label above it, without a frame. */
 export type SceneTerritory = { id: string; label: string; side: Side; nodes: SceneNode[]; bare?: boolean };
 export type Scene = {
@@ -36,12 +36,11 @@ const STATUS_ORDER: AssetState[] = ["gap", "upcoming", "covered", "shared", "neu
 const worst = (states: AssetState[]): AssetState => STATUS_ORDER.find((s) => states.includes(s)) ?? "neutral";
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
+/** The smaller things around a person, in the corners. (Insurance itself is the four categories.) */
 const GROUPS = [
-  { id: "insurance", label: "Insurance", glyph: "fraud", side: "n" as const },
-  { id: "money", label: "Accounts & cards", glyph: "bank", side: "w" as const },
-  { id: "needs", label: "Missing & coming up", glyph: "alert", side: "e" as const },
-  { id: "credit", label: "Borrowing & saving", glyph: "key", side: "s" as const },
-  { id: "family", label: "Family", glyph: "family", side: "s2" as const },
+  { id: "money", label: "Accounts & cards", glyph: "bank", side: "nw" as const },
+  { id: "credit", label: "Borrowing & saving", glyph: "key", side: "sw" as const },
+  { id: "family", label: "Family", glyph: "family", side: "se" as const },
 ];
 const SIDES: Side[] = ["n", "w", "e", "s"];
 
@@ -161,19 +160,25 @@ function groupCount(ego: EgoModel, personId: string, id: string) {
   return (ego.family[personId] ?? []).length;
 }
 
-/** One person in the middle, one picture for each part of their world. */
+/** One person in the middle: the four KBC categories around them, and smaller satellites in the corners. */
 export function personScene(ego: EgoModel, personId: string): Scene {
   const me = ego.assets[`person:${personId}`];
   const details: Record<string, Asset> = {};
   const territories: SceneTerritory[] = [];
-  let things = 0;
+
+  const cats = insuranceCategories(ego, personId);
+  cats.forEach((c, i) => {
+    const id = `cat:insurance:${c.id}`;
+    details[id] = categoryPseudo(ego, personId, "insurance", c);
+    territories.push({ id: `cat-${c.id}`, label: c.label, side: SIDES[i % SIDES.length], bare: true, nodes: [{ id, label: c.label, caption: c.caption, glyph: c.glyph, state: c.state, large: true }] });
+  });
+
   for (const g of GROUPS) {
     const n = groupCount(ego, personId, g.id);
     if (n === 0) continue;
-    if (g.id !== "family") things += n;
     const sum = groupSummary(ego, personId, g);
     const id = `grp:${g.id}`;
-    const cats = groupCategories(ego, personId, g.id);
+    const sub = groupCategories(ego, personId, g.id);
     details[id] = pseudo(
       id,
       "group",
@@ -182,24 +187,36 @@ export function personScene(ego: EgoModel, personId: string): Scene {
       g.glyph,
       sum.detail,
       [{ k: "Around " + me.label, v: g.id === "family" ? plural(n, "person", "people") : plural(n, "thing") }],
-      cats.map((c) => ({ id: `cat:${g.id}:${c.id}`, relation: c.caption })),
+      sub.map((c) => ({ id: `cat:${g.id}:${c.id}`, relation: c.caption })),
       "Grouped from the NovaBank data lake",
     );
-    for (const c of cats) details[`cat:${g.id}:${c.id}`] = categoryPseudo(g.id, c);
-    territories.push({ id: g.id, label: g.label, side: g.side, bare: true, nodes: [{ id, label: g.label, caption: sum.caption, glyph: g.glyph, state: sum.state, large: true }] });
+    for (const c of sub) details[`cat:${g.id}:${c.id}`] = categoryPseudo(ego, personId, g.id, c);
+    territories.push({ id: g.id, label: g.label, side: g.side, bare: true, nodes: [{ id, label: g.label, caption: sum.caption, glyph: g.glyph, state: sum.state }] });
   }
+
+  const have = cats.reduce((n, c) => n + c.assetIds.filter((id) => ["covered", "shared"].includes(ego.assets[id].personState[personId])).length, 0);
+  const open = ego.byPerson[personId].needs.length;
   return {
     key: `person:${personId}`,
     title: `${me.label}'s cover`,
-    subtitle: `${things} things around ${me.label}`,
+    subtitle: `${have} covered · ${open} to look at`,
     center: { id: me.id, label: me.label, caption: me.caption, glyph: me.glyph, state: "neutral" },
     territories,
     details,
   };
 }
 
-function categoryPseudo(group: string, c: Category): Asset {
-  return pseudo(`cat:${group}:${c.id}`, "category", c.label, c.caption, c.glyph, c.detail, [], [], "Grouped from the NovaBank data lake and the KBC product grouping");
+const STATE_WORDS: Record<string, string> = { covered: "in place", shared: "via family", gap: "missing", upcoming: "needed soon" };
+
+function categoryPseudo(ego: EgoModel, personId: string, group: string, c: Category): Asset {
+  const related: Related[] =
+    group === "insurance" || group === "needs"
+      ? c.assetIds.flatMap((id) => {
+          const st = ego.assets[id]?.personState[personId];
+          return st ? [{ id, relation: STATE_WORDS[st] ?? st }] : [];
+        })
+      : c.assetIds.map((id) => ({ id, relation: "includes" }));
+  return pseudo(`cat:${group}:${c.id}`, "category", c.label, c.caption, c.glyph, c.detail, [], related, "Grouped from the NovaBank data lake and the KBC product grouping");
 }
 
 function groupLabel(id: string) {
@@ -241,7 +258,7 @@ export function groupScene(ego: EgoModel, personId: string, group: string): Scen
   const cats = groupCategories(ego, personId, group);
   details[center.id].related = cats.map((c) => ({ id: `cat:${group}:${c.id}`, relation: c.caption }));
   const territories: SceneTerritory[] = cats.map((c, i) => {
-    details[`cat:${group}:${c.id}`] = categoryPseudo(group, c);
+    details[`cat:${group}:${c.id}`] = categoryPseudo(ego, personId, group, c);
     return {
       id: c.id,
       label: c.label,
@@ -260,7 +277,7 @@ export function categoryScene(ego: EgoModel, personId: string, group: string, ca
   const cat = cats.find((c) => c.id === category) ?? cats[0];
   const details: Record<string, Asset> = {};
   const center: SceneNode = { id: `cat:${group}:${cat.id}`, label: cat.label, caption: cat.caption, glyph: cat.glyph, state: cat.state };
-  details[center.id] = categoryPseudo(group, cat);
+  details[center.id] = categoryPseudo(ego, personId, group, cat);
 
   const insurance = group === "insurance" || group === "needs";
   if (insurance) {

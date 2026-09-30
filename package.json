@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "build:catalogue": "node scripts/build-kbc-catalogue.mjs",
+    "build:pixel-art": "node scripts/build-pixel-art.mjs"
   },
   "dependencies": {
     "next": "^15.5.4",

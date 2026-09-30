@@ -33,3 +33,11 @@ lib/                 Types and product helpers
 ```
 
 Add a product by appending an object to `data/products.json` with `id`, `name`, `category`, copy, `highlights`, `whoItIsFor`, and `typicalPrice`. Categories: `insurance`, `banking`, `lending`, `investing`.
+
+## Family cover map (`/insurance`)
+
+A person-centred map of the mock NovaBank family: the four KBC insurance categories around the person, smaller satellites for accounts, borrowing and family, and a navbar bell for alerts.
+
+- `data/kbc_insurance_catalogue.csv` is the KBC grouping (categories → products). Edit it, then run `npm run build:catalogue` to regenerate `data/kbc-insurance-catalogue.json`.
+- Pixel-art icons are drawn as vectors in `scripts/build-pixel-art.mjs`; `npm run build:pixel-art` regenerates `app/insurance/pixel-art.json`.
+- The family data lake lives in `data/novabank_datalake/` (see its README). All names, prices and cover details are mock.

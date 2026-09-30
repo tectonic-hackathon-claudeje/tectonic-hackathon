@@ -147,6 +147,10 @@ function layout(scene: Scene): Laid {
     b.y = reach;
     cursor += b.w + GAP;
   }
+  const nw = side("nw");
+  const ne = side("ne");
+  const sw = side("sw");
+  const se = side("se");
   if (w) {
     w.x = -(CENTER_W / 2 + GAP + w.w);
     w.y = -w.h / 2;
@@ -155,6 +159,15 @@ function layout(scene: Scene): Laid {
     e.x = CENTER_W / 2 + GAP;
     e.y = -e.h / 2;
   }
+  // Satellites sit in the corners, in line with the territories beside them.
+  const northY = n ? n.y : -reach - 150;
+  const southY = s?.y ?? reach;
+  const westX = (t: Placed) => (w ? w.x + (w.w - t.w) / 2 : -(CENTER_W / 2 + GAP + t.w));
+  const eastX = (t: Placed) => (e ? e.x + (e.w - t.w) / 2 : CENTER_W / 2 + GAP);
+  if (nw) [nw.x, nw.y] = [westX(nw), northY];
+  if (ne) [ne.x, ne.y] = [eastX(ne), northY];
+  if (sw) [sw.x, sw.y] = [westX(sw), southY];
+  if (se) [se.x, se.y] = [eastX(se), southY];
   const nodes: PlacedNode[] = [];
   for (const t of placed)
     t.nodes.forEach((nd, i) => {
@@ -388,7 +401,9 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
           {territories.map((t) => {
             const cp = rectPoint({ x: -CENTER_W / 2, y: -CENTER_H / 2, w: CENTER_W, h: CENTER_H }, t.x + t.w / 2, t.y + t.h / 2);
             const tp = rectPoint(t, 0, 0);
-            return t.side === "s2" ? null : <line key={`l-${t.id}`} x1={cp.x} y1={cp.y} x2={tp.x} y2={tp.y} stroke="var(--line)" strokeWidth={1.4} />;
+            if (t.side === "s2") return null;
+            const corner = t.side.length === 2;
+            return <line key={`l-${t.id}`} x1={cp.x} y1={cp.y} x2={tp.x} y2={tp.y} stroke="var(--line)" strokeWidth={1.4} strokeDasharray={corner ? "3 7" : undefined} opacity={corner ? 0.7 : 1} />;
           })}
           {territories.map((t) => (
             <g key={t.id}>
