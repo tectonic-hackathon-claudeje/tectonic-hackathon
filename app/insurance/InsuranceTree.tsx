@@ -7,9 +7,9 @@ import { alertsFor } from "@/lib/insurance/alerts";
 import type { AccessLevel, Asset, EgoModel } from "@/lib/insurance/ego";
 import { KBC } from "@/lib/insurance/kbc";
 import type { InsuranceModel } from "@/lib/insurance/model";
-import { answer, opener, speakerFor, suggestions, type Action, type Nav, type Reply } from "./assistant";
+import { answer, opener, speakerFor, stepsForGap, suggestions, type Action, type Nav, type Reply } from "./assistant";
 import type { Msg } from "./chatTypes";
-import { ChatPanel } from "./Chat";
+import { ChatPanel, type Pick } from "./Chat";
 import { EgoMap } from "./EgoMap";
 import { OfferCard, Panel } from "./Panel";
 import { PixelIcon } from "./pixel";
@@ -42,7 +42,8 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
   const [proposal, setProposal] = useState<string[]>([]);
   const [responses, setResponses] = useState<Record<string, Reply>>({});
   const [requested, setRequested] = useState<string[]>([]);
-  const [msgs, setMsgs] = useState<Msg[]>([]);
+  // Each insurance has its own conversation, kept while you look at others.
+  const [threads, setThreads] = useState<Record<string, Msg[]>>({});
   const seq = useRef(0);
 
   // The theme belongs to the whole page, so it lives on <html>.
@@ -202,30 +203,60 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
     navigate(nav);
     return { id: id(), role: "system", text: `Took you to ${navLabel(nav)}.`, nav: { to: nav, from } };
   };
+  const speakerKey = speaker.assetId ?? "none";
+  const msgs = threads[speakerKey] ?? [];
+  const addMsgs = (key: string, list: Msg[]) => setThreads((all) => ({ ...all, [key]: [...(all[key] ?? []), ...list] }));
   const send = (text: string) => {
     const t = text.trim();
-    if (!t) return;
-    const ans = answer(t, { ego, model, viewer: VIEWER, personId, shown, mine: alerts.mine, others: alerts.others, speaker });
+    if (!t || speaker.kind === "group") return;
+    const ctx = { ego, model, viewer: VIEWER, personId, mine: alerts.mine, others: alerts.others };
+    const ans = answer(t, { ...ctx, shown, speaker });
     const out: Msg[] = [{ id: id(), role: "user", text: t }];
     if (ans.navigate) out.push(goWithNote(ans.navigate));
     if (ans.respond) respond(ans.respond.gapId, ans.respond.reply);
     out.push({ id: id(), role: "assistant", text: ans.text, actions: ans.actions, offerGapId: ans.offerGapId, from: { label: speaker.label, glyph: speaker.glyph } });
-    setMsgs((m) => [...m, ...out]);
+    addMsgs(speakerKey, out);
+
+    // A question that is another insurance's job is handed over: that insurance answers it in its own thread.
+    const last = ans.navigate?.steps[ans.navigate.steps.length - 1];
+    const target = last && last.kind === "asset" ? ego.assets[last.id] : undefined;
+    if (target && (target.kind === "policy" || target.kind === "gap")) {
+      const tSpeaker = speakerFor(target, target.kind === "gap" ? target : undefined, undefined, ego);
+      if (tSpeaker.assetId && tSpeaker.assetId !== speaker.assetId) {
+        const tAns = answer(t, { ...ctx, shown: target, speaker: tSpeaker });
+        addMsgs(tSpeaker.assetId, [
+          { id: id(), role: "user", text: t },
+          { id: id(), role: "assistant", text: tAns.text, actions: tAns.actions, offerGapId: tAns.offerGapId, from: { label: tSpeaker.label, glyph: tSpeaker.glyph } },
+        ]);
+      }
+    }
   };
   const runAction = (a: Action) => {
     if (a.kind === "go") {
       const note = goWithNote(a.nav);
-      setMsgs((m) => [...m, note]);
+      addMsgs(speakerKey, [note]);
     } else if (a.kind === "add") addCovers(a.covers);
     else if (a.kind === "call") {
-      setMsgs((m) => [...m, { id: id(), role: "assistant", text: `Done: I\u2019ve asked your advisor to call you (this is a demo, so nothing is sent). You can carry on here meanwhile.`, from: { label: speaker.label, glyph: speaker.glyph } }]);
+      addMsgs(speakerKey, [{ id: id(), role: "assistant", text: `Done: I\u2019ve asked your advisor to call you (this is a demo, so nothing is sent). You can carry on here meanwhile.`, from: { label: speaker.label, glyph: speaker.glyph } }]);
     } else if (a.kind === "respond") respond(a.gapId, a.reply);
   };
   const undoNav = (msgId: string) => {
-    const m = msgs.find((x) => x.id === msgId);
+    const m = Object.values(threads).flat().find((x) => x.id === msgId);
     if (!m?.nav) return;
     navigate(m.nav.from);
-    setMsgs((all) => all.map((x) => (x.id === msgId && x.nav ? { ...x, nav: { ...x.nav, undone: true } } : x)));
+    setThreads((all) => Object.fromEntries(Object.entries(all).map(([k, list]) => [k, list.map((x) => (x.id === msgId && x.nav ? { ...x, nav: { ...x.nav, undone: true } } : x))])));
+  };
+  // Which insurances you can pick to talk to: what you have, then what is not in place.
+  const picks: Pick[] = [
+    ...Object.values(ego.assets)
+      .filter((a) => a.kind === "policy" && ["covered", "shared"].includes(a.personState[personId] ?? ""))
+      .map((a) => ({ id: a.id, label: a.label, glyph: a.glyph, inPlace: true })),
+    ...alerts.mine.filter((a) => a.kind === "gap").slice(0, 4).map((a) => ({ id: a.id, label: a.label, glyph: a.glyph, inPlace: false })),
+  ];
+  const pick = (assetId: string) => {
+    const a = ego.assets[assetId];
+    if (!a) return;
+    navigate({ steps: a.kind === "gap" ? stepsForGap(a) : [{ kind: "asset", id: a.id }] });
   };
   const worried = alerts.others[0] ? nameOf(alerts.others[0].personIds[0]) : undefined;
   const chips = suggestions(speaker, shown, personId === VIEWER, person.name, worried);
@@ -402,6 +433,8 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
               />
               <ChatPanel
                 speaker={speaker}
+                picks={picks}
+                onPick={pick}
                 msgs={msgs}
                 chips={chips}
                 opener={opener(speaker, personId === VIEWER, person.name, viewerName)}

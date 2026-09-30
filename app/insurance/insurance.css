@@ -335,3 +335,26 @@ html[data-theme="dark"] .skip-link { color: var(--accent-ink); }
 .cw-ai { margin-left: 0.2rem; padding: 0.05rem 0.4rem; border: 1px solid var(--line); border-radius: 999px; font: 600 0.62rem ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); cursor: help; }
 .cw-from { display: block; margin-bottom: 0.15rem; font: 600 0.68rem ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
 .cw-chat-head strong { font-size: 0.95rem; }
+
+/* KBC-branded chat: each insurance talks from its own blue band */
+.cw-chat { padding: 0 !important; gap: 0 !important; overflow: hidden; }
+.cw-chat > :not(.cw-chat-head) { margin-left: 1.25rem; margin-right: 1.25rem; }
+.cw-chat-head { margin: 0 !important; padding: 0.7rem 1.25rem; background: var(--accent); color: #fff; display: flex; align-items: center; gap: 0.6rem; }
+.cw-chat-head strong { color: #fff; }
+.cw-chat-head small { color: rgb(255 255 255 / 0.8); }
+.cw-chat-head .cw-sam { background: rgb(255 255 255 / 0.18); }
+.cw-who { display: grid; line-height: 1.15; min-width: 0; }
+.cw-who strong { font-size: 0.95rem; }
+.cw-chat-head .cw-ai { border-color: rgb(255 255 255 / 0.5); color: #fff; }
+.cw-chat-head .cw-person { color: #fff; }
+.cw-chat .cw-opener { margin-top: 0.8rem; }
+.cw-chat .cw-msgs { margin-top: 0.8rem; }
+.cw-chat .cw-chips { margin-top: 0.6rem; }
+.cw-chat form { margin-top: 0.6rem; margin-bottom: 1rem; }
+.cw-picks { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.7rem; margin-bottom: 1rem; }
+.cw-pick { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.8rem 0.3rem 0.3rem; border-radius: 999px; border: 1.5px dashed var(--gap); background: transparent; color: var(--ink); font: 600 0.85rem system-ui, sans-serif; cursor: pointer; }
+.cw-pick > span { display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--surface); }
+.cw-pick-on { border: 1.5px solid var(--accent); }
+.cw-pick-on > span { background: var(--accent); }
+.cw-pick:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.cw-msg-assistant { border-left: 3px solid var(--accent); border-radius: 4px 14px 14px 4px; }

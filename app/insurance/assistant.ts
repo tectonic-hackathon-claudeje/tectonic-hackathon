@@ -24,13 +24,19 @@ export type Answer = { text: string; actions: Action[]; navigate?: Nav; offerGap
 /** Who is talking: the insurance itself when one is selected, otherwise the insurances together. */
 export type Speaker = { kind: "policy" | "cover" | "group"; label: string; sub?: string; glyph: string; assetId?: string };
 
+const kbcName = (name: string) => (/^kbc\b/i.test(name) ? name : `KBC ${name}`);
+const titleCase = (t: string) => t.replace(/\b(\w)(\w*)/g, (_, a: string, b: string) => a.toUpperCase() + b.toLowerCase());
+
 export function speakerFor(shown: Asset, gap: Asset | undefined, viaPolicy: Asset | undefined, ego: EgoModel): Speaker {
   const policy = shown.kind === "policy" ? shown : viaPolicy?.kind === "policy" ? viaPolicy : undefined;
-  if (policy) return { kind: "policy", label: policy.label, sub: policy.caption.split(" \u00b7 ")[0], glyph: policy.glyph, assetId: policy.id };
-  if (gap) return { kind: "cover", label: gap.label, sub: "not in place yet", glyph: gap.glyph, assetId: gap.id };
-  if (shown.kind === "category") return { kind: "group", label: `Your ${shown.label.toLowerCase()} insurances`, glyph: shown.glyph };
+  if (policy) return { kind: "policy", label: kbcName(titleCase(policy.label)), sub: `via ${policy.caption.split(" \u00b7 ")[0]}`, glyph: policy.glyph, assetId: policy.id };
+  if (gap) return { kind: "cover", label: kbcName(gap.product?.name ?? gap.label), sub: "not in place yet", glyph: gap.glyph, assetId: gap.id };
+  if (shown.kind === "product") {
+    const kp = KBC.products.find((p) => `kbc:${p.id}` === shown.id);
+    return { kind: "cover", label: kbcName(kp?.name ?? shown.label), sub: "not in place yet", glyph: shown.glyph, assetId: shown.id };
+  }
   void ego;
-  return { kind: "group", label: "Your insurances", glyph: "fraud" };
+  return { kind: "group", label: "Your KBC insurances", glyph: "fraud" };
 }
 
 export type Context = {
@@ -98,10 +104,9 @@ export function suggestions(speaker: Speaker, shown: Asset, isMe: boolean, name:
 
 /** The first line of the conversation, in the voice of whoever you are talking to. Only shown until you say something. */
 export function opener(speaker: Speaker, isMe: boolean, name: string, viewerName: string): string {
-  if (speaker.kind === "policy") return `Hi${isMe ? ` ${viewerName}` : ""}, I\u2019m your ${speaker.label.toLowerCase()}${speaker.sub ? ` with ${speaker.sub}` : ""}. Ask me what I pay for, and when I don\u2019t.`;
+  if (speaker.kind === "policy") return `Hi${isMe ? ` ${viewerName}` : ""}, I\u2019m ${speaker.label}. Ask me what I pay for, and when I don\u2019t.`;
   if (speaker.kind === "cover") return `I\u2019m ${speaker.label}. I\u2019m not in place for you, so nothing is decided. Ask me anything, or just ignore me.`;
-  if (speaker.label.startsWith("Your ") && speaker.label !== "Your insurances") return `We\u2019re your ${speaker.label.replace("Your ", "")}. Ask us what\u2019s covered, or tell us what worries you.`;
-  return isMe ? `Hi ${viewerName}, we\u2019re your insurances. Ask us anything, or just tell us what\u2019s on your mind.` : `You\u2019re looking at ${name}. Ask us anything, or tell us what worries you.`;
+  return isMe ? `Pick one of your insurances to talk to it.` : `Pick one of ${name}\u2019s insurances to talk to it.`;
 }
 
 const ADVISOR: Action = { kind: "call", label: "Talk to a person" };
@@ -145,6 +150,8 @@ export function answer(question: string, ctx: Context): Answer {
     const about = WORDS.find(([re]) => re.test(q));
     const mine_ = pol?.products ?? [];
     const isMyJob = !about || about[1].some((id) => mine_.includes(id));
+    const aboutMe = /pay|cover|include|exclu|when|what (do|does|would|am|are)|material|damage|accident|fire|theft|hail|stolen|protect|happen|get|insured|renew|cost|price|premium|document|pdf|papers|conditions|contract/.test(q);
+    if (pol && isMyJob && !aboutMe) return { text: "I can tell you what I pay for, when I don\u2019t, what I cost and when I renew. For anything bigger, you can talk to another insurance, or to a person.", actions: [ADVISOR] };
     if (pol && isMyJob) {
       if (/renew|expire|when do you|due/.test(q) && !/pay|cover/.test(q)) return { text: pol.meta?.renews ? `I renew on ${fmt(pol.meta.renews)}.` : "I come with another product, so I don\u2019t have a renewal date of my own.", actions: [] };
       if (/cost|price|premium|how much|pay you|per month/.test(q) && !/not pay|don'?t pay/.test(q)) return { text: `I cost ${pol.caption.split(" \u00b7 ")[1] ?? "what\u2019s on file"}.`, actions: [] };
@@ -168,7 +175,7 @@ export function answer(question: string, ctx: Context): Answer {
   }
   if (speaker.kind === "cover" && speaker.assetId) {
     const g = ego.assets[speaker.assetId];
-    const kp = KBC.products.find((p) => p.id === g?.kbcId);
+    const kp = KBC.products.find((p) => p.id === (g?.kbcId ?? g?.id.replace(/^kbc:/, "")));
     if (g && kp) {
       if (/cover|include|pay for|what would you|what do you|do for me/.test(q) && !/not/.test(q)) return { text: `I would cover ${kp.covers.charAt(0).toLowerCase()}${kp.covers.slice(1)}. I\u2019m not in place for you, so right now I cover nothing.`, actions: [] };
       if (/cost|price|much|cheap/.test(q)) return { text: priceLine(g, ageOf(g.personIds[0])), actions: [] };

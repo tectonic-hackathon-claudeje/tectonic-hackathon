@@ -5,13 +5,17 @@ import type { Action } from "./assistant";
 import type { Msg } from "./chatTypes";
 import { PixelIcon } from "./pixel";
 
+export type Pick = { id: string; label: string; glyph: string; inPlace: boolean };
+
 /**
- * A chat with Sam, the virtual helper. Sam does not speak first: until you type or tap something the
- * frame only shows a friendly line and an easy way in. When an answer moves the map, a slim line says
- * where it went and lets you undo it.
+ * A chat with one insurance at a time. Each insurance has its own conversation, in its own KBC-branded
+ * frame, and is only spoken to when you inspect it. With nothing inspected there is no shared helper:
+ * you pick which insurance to talk to. Nothing speaks until you do.
  */
 export function ChatPanel({
   speaker,
+  picks,
+  onPick,
   msgs,
   chips,
   opener,
@@ -20,7 +24,9 @@ export function ChatPanel({
   onUndo,
   renderOffer,
 }: {
-  speaker: { label: string; sub?: string; glyph: string };
+  speaker: { kind: "policy" | "cover" | "group"; label: string; sub?: string; glyph: string };
+  picks: Pick[];
+  onPick: (id: string) => void;
   msgs: Msg[];
   chips: string[];
   opener: string;
@@ -36,21 +42,44 @@ export function ChatPanel({
     const el = list.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [msgs.length]);
-  const started = msgs.length > 0;
 
+  // Nothing inspected: choose who to talk to.
+  if (speaker.kind === "group")
+    return (
+      <section className="cw-chat cw-chat-pick" aria-label="Talk to an insurance">
+        <header className="cw-chat-head">
+          <span className="cw-sam"><PixelIcon id="fraud" size={18} ink="#ffffff" accent="#ffffff" /></span>
+          <strong>Talk to an insurance</strong>
+          <button type="button" className="cw-person" onClick={() => onAction({ kind: "call", label: "Talk to a person" })}>Talk to a person</button>
+        </header>
+        <p className="cw-opener">{opener}</p>
+        <div className="cw-picks">
+          {picks.map((p) => (
+            <button key={p.id} type="button" className={p.inPlace ? "cw-pick cw-pick-on" : "cw-pick"} onClick={() => onPick(p.id)}>
+              <span><PixelIcon id={p.glyph} size={22} ink={p.inPlace ? "#ffffff" : "currentColor"} accent={p.inPlace ? "#ffffff" : "currentColor"} /></span>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+
+  const started = msgs.length > 0;
   return (
     <section className={`cw-chat${started ? " cw-chat-open" : ""}`} aria-label={`Chat with ${speaker.label}`}>
       <header className="cw-chat-head">
-        <span className="cw-sam"><PixelIcon id={speaker.glyph} size={16} ink="#ffffff" accent="#ffffff" /></span>
-        <strong>{speaker.label}</strong>
-        {speaker.sub ? <small>{speaker.sub}</small> : null}
+        <span className="cw-sam"><PixelIcon id={speaker.glyph} size={18} ink="#ffffff" accent="#ffffff" /></span>
+        <span className="cw-who">
+          <strong>{speaker.label}</strong>
+          {speaker.sub ? <small>{speaker.sub}</small> : null}
+        </span>
         <small className="cw-ai" title="This voice is made up by the app to help you. It is not a statement from the insurer.">AI voice</small>
         <button type="button" className="cw-person" onClick={() => onAction({ kind: "call", label: "Talk to a person" })}>Talk to a person</button>
       </header>
 
       {started ? (
         <div ref={list} className="cw-msgs" role="log" aria-live="polite" aria-relevant="additions">
-          {msgs.map((m, i) =>
+          {msgs.map((m) =>
             m.role === "system" ? (
               <p key={m.id} className="cw-sys">
                 {m.text}{" "}
@@ -58,7 +87,6 @@ export function ChatPanel({
               </p>
             ) : (
               <div key={m.id} className={`cw-msg cw-msg-${m.role}`}>
-                {m.role === "assistant" && m.from && m.from.label !== msgs.slice(0, i).reverse().find((x) => x.role === "assistant")?.from?.label ? <span className="cw-from">{m.from.label}</span> : null}
                 <p>{m.text}</p>
                 {m.offerGapId ? renderOffer(m.offerGapId) : null}
                 {m.actions && m.actions.length > 0 ? (
@@ -96,7 +124,7 @@ export function ChatPanel({
           setQ("");
         }}
       >
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tell me what’s on your mind…" aria-label={`Message ${speaker.label}`} autoComplete="off" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask me anything…" aria-label={`Message ${speaker.label}`} autoComplete="off" />
         <button type="submit" aria-label="Send">↑</button>
       </form>
     </section>
