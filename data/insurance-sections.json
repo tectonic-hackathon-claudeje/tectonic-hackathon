@@ -1,0 +1,35 @@
+[
+  {
+    "id": "health",
+    "title": "Health & care",
+    "column": 0,
+    "covers": [
+      "hospital",
+      "travel",
+      "care"
+    ]
+  },
+  {
+    "id": "home",
+    "title": "Home & property",
+    "column": 0,
+    "covers": [
+      "home",
+      "contents",
+      "mortgage",
+      "income"
+    ]
+  },
+  {
+    "id": "everyday",
+    "title": "Everyday risks",
+    "column": 1,
+    "covers": [
+      "liability",
+      "legal",
+      "car",
+      "roadside",
+      "fraud"
+    ]
+  }
+]
