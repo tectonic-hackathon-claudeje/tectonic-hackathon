@@ -1,7 +1,8 @@
+import { KBC as kbc } from "./kbc";
 import { list, readTable } from "./csv";
 import type { InsuranceModel, Priority, Product, Status } from "./model";
 
-export type AssetKind = "person" | "policy" | "account" | "card" | "loan" | "goal" | "gap";
+export type AssetKind = "person" | "policy" | "account" | "card" | "loan" | "goal" | "gap" | "product" | "group" | "category";
 export type AssetState = Status | "neutral";
 
 export type Link = { label: string; href: string; external?: boolean };
@@ -30,7 +31,15 @@ export type Asset = {
   coverId?: string;
   product?: Product;
   priority?: Priority;
+  /** KBC catalogue products this policy stands for. */
+  products?: string[];
+  /** The KBC catalogue product a gap would be closed by. */
+  kbcId?: string;
+  /** For a catalogue product: what to open for each person (their policy, or their gap). */
+  via?: Record<string, string>;
 };
+
+
 
 export type Territories = { insurance: string[]; money: string[]; credit: string[]; needs: string[] };
 
@@ -250,6 +259,7 @@ export function buildEgo(model: InsuranceModel): EgoModel {
       source: `NovaBank data lake · insurance_policies ${p.policy_id}`,
       links,
       coverId: cover,
+      products: kbc.policyCovers[cover] ?? [],
     });
     if (p.paid_from) relate(`pol:${p.policy_id}`, `acc:${p.paid_from}`, "paid from", "pays premium");
     const loan = loans.find((l) => p.object.includes(l.loan_id));
@@ -261,13 +271,14 @@ export function buildEgo(model: InsuranceModel): EgoModel {
     for (const c of n.cells) {
       if (c.status !== "gap" && c.status !== "upcoming") continue;
       const id = `gap:${n.id}:${c.personId}`;
+      const kp = kbc.products.find((x) => x.id === n.kbcProduct);
       const links: Link[] = PRODUCT_PAGE[n.id] ? [{ label: "Related product page (mock)", href: `/products/${PRODUCT_PAGE[n.id]}` }] : [];
       put({
         id,
         kind: "gap",
-        label: n.label,
+        label: kp?.short ?? n.label,
         caption: c.status === "upcoming" ? "Needed soon" : `Gap${c.priority ? ` · ${c.priority}` : ""}`,
-        glyph: n.id,
+        glyph: kp?.glyph ?? n.id,
         state: c.status,
         personIds: [c.personId],
         roles: { [c.personId]: c.status === "upcoming" ? "needed soon" : "missing" },
@@ -283,6 +294,7 @@ export function buildEgo(model: InsuranceModel): EgoModel {
         coverId: n.id,
         product: n.product,
         priority: c.priority,
+        kbcId: kp?.id,
       });
       for (const parent of n.parents) {
         const held = model.nodes.find((x) => x.id === parent)?.cells.find((x) => x.personId === c.personId)?.policy;
@@ -329,6 +341,44 @@ export function buildEgo(model: InsuranceModel): EgoModel {
     const seen = new Set<string>();
     family[pid] = rels.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
     for (const r of family[pid]) assets[`person:${pid}`]?.related.push({ id: `person:${r.id}`, relation: r.relation });
+  }
+
+  // --- the KBC catalogue: each product, and what it means for each person
+  const categoryLabel = new Map(kbc.categories.map((c) => [c.id, c.label]));
+  for (const kp of kbc.products) {
+    const personState: Record<string, Status> = {};
+    const via: Record<string, string> = {};
+    for (const p of model.people) {
+      const pol = Object.values(assets).find((a) => a.kind === "policy" && a.products?.includes(kp.id) && a.personState[p.id]);
+      if (pol) {
+        personState[p.id] = pol.personState[p.id];
+        via[p.id] = pol.id;
+        continue;
+      }
+      const gap = Object.values(assets).find((a) => a.kind === "gap" && a.kbcId === kp.id && a.personIds.includes(p.id));
+      if (gap && (gap.state === "gap" || gap.state === "upcoming")) {
+        personState[p.id] = gap.state;
+        via[p.id] = gap.id;
+      }
+    }
+    put({
+      id: `kbc:${kp.id}`,
+      kind: "product",
+      label: kp.short,
+      caption: categoryLabel.get(kp.category) ?? kp.category,
+      glyph: kp.glyph,
+      state: "neutral",
+      personIds: [],
+      personState,
+      via,
+      detail: `${kp.name}. ${kp.covers}.`,
+      facts: [
+        { k: "Offered by", v: "KBC (mock catalogue)" },
+        { k: "Covers", v: kp.covers },
+        { k: "Group", v: categoryLabel.get(kp.category) ?? kp.category },
+      ],
+      source: "KBC insurance grouping agreed by the team · kbc-insurance-catalogue.json",
+    });
   }
 
   // --- what sits around each person

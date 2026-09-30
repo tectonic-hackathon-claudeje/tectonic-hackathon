@@ -39,6 +39,8 @@ export type TreeNode = {
   parents: string[];
   icon: string;
   summary: string;
+  /** The KBC product (see data/kbc-insurance-catalogue.json) that would close a gap in this cover. */
+  kbcProduct: string | null;
   product: Product;
   cells: Cell[];
 };
@@ -273,6 +275,7 @@ export function buildModel(): InsuranceModel {
     parents: n.parents,
     icon: n.icon,
     summary: n.summary,
+    kbcProduct: n.kbcProduct,
     product: n.product,
     cells: people.map((p) => rules[n.id](p)),
   }));

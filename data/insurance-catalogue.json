@@ -1,40 +1,184 @@
 [
-  { "id": "hospital", "label": "Hospitalisation", "tier": 1, "parents": [], "icon": "H",
+  {
+    "id": "hospital",
+    "label": "Hospitalisation",
+    "tier": 1,
+    "parents": [],
+    "icon": "H",
     "summary": "Pays hospital bills that the mutuality does not.",
-    "product": { "name": "NovaCare Hospital Plus", "monthly": 29, "pitch": "Hospital cover with no age ceiling on renewal, for people the family plan does not include." } },
-  { "id": "liability", "label": "Family liability", "tier": 1, "parents": [], "icon": "L",
+    "product": {
+      "name": "KBC Hospitalisation Insurance",
+      "monthly": 29,
+      "pitch": "Hospital cover with no age ceiling on renewal, for people the family plan does not include."
+    },
+    "kbcProduct": "hospitalisation"
+  },
+  {
+    "id": "liability",
+    "label": "Family liability",
+    "tier": 1,
+    "parents": [],
+    "icon": "L",
     "summary": "Covers damage you cause to other people, including by children and pets.",
-    "product": { "name": "NovaShield Family Liability", "monthly": 8, "pitch": "One policy for every person in the household, including adult children living at home or in a kot." } },
-  { "id": "home", "label": "Home & fire", "tier": 1, "parents": [], "icon": "W",
+    "product": {
+      "name": "KBC Family Insurance",
+      "monthly": 8,
+      "pitch": "One policy for every person in the household, including adult children living at home or in a kot."
+    },
+    "kbcProduct": "family"
+  },
+  {
+    "id": "home",
+    "label": "Home & fire",
+    "tier": 1,
+    "parents": [],
+    "icon": "W",
     "summary": "Building and contents after fire, storm or water damage.",
-    "product": { "name": "NovaHome Complete", "monthly": 34, "pitch": "Building and contents cover for a new home, with storm, water and theft options." } },
-  { "id": "car", "label": "Car (BA + omnium)", "tier": 1, "parents": [], "icon": "C",
+    "product": {
+      "name": "KBC Home Insurance – owner",
+      "monthly": 34,
+      "pitch": "Building and contents cover for a new home, with storm, water and theft options."
+    },
+    "kbcProduct": "home-owner"
+  },
+  {
+    "id": "car",
+    "label": "Car (BA + omnium)",
+    "tier": 1,
+    "parents": [],
+    "icon": "C",
     "summary": "Third-party liability, plus own-damage cover on the car.",
-    "product": { "name": "NovaDrive Essential", "monthly": 52, "pitch": "Liability cover with an omnium level matched to the car's current value." } },
-  { "id": "fraud", "label": "Fraud & cyber", "tier": 1, "parents": [], "icon": "F",
+    "product": {
+      "name": "Car insurance – third-party liability (BA/RC)",
+      "monthly": 52,
+      "pitch": "Liability cover with an omnium level matched to the car's current value."
+    },
+    "kbcProduct": "car-bi"
+  },
+  {
+    "id": "fraud",
+    "label": "Fraud & cyber",
+    "tier": 1,
+    "parents": [],
+    "icon": "F",
     "summary": "Refunds and help after phishing, fake calls and unauthorised payments.",
-    "product": { "name": "NovaSafe Senior Fraud Cover", "monthly": 6, "pitch": "Refund cover and a trusted-contact alert that also reaches the family member managing the account." } },
-
-  { "id": "travel", "label": "Travel", "tier": 2, "parents": ["hospital"], "icon": "T",
+    "product": {
+      "name": "KBC CyberSecure Insurance",
+      "monthly": 6,
+      "pitch": "Refund cover and a trusted-contact alert that also reaches the family member managing the account."
+    },
+    "kbcProduct": "cybersecure"
+  },
+  {
+    "id": "travel",
+    "label": "Travel",
+    "tier": 2,
+    "parents": [
+      "hospital"
+    ],
+    "icon": "T",
     "summary": "Medical costs, cancellation and luggage when you are abroad.",
-    "product": { "name": "NovaTravel Student Abroad", "monthly": 11, "pitch": "Covers a full exchange semester abroad, including medical costs and repatriation." } },
-  { "id": "legal", "label": "Legal aid", "tier": 2, "parents": ["liability"], "icon": "J",
+    "product": {
+      "name": "KBC Travel Insurance",
+      "monthly": 11,
+      "pitch": "Covers a full exchange semester abroad, including medical costs and repatriation."
+    },
+    "kbcProduct": "travel"
+  },
+  {
+    "id": "legal",
+    "label": "Legal aid",
+    "tier": 2,
+    "parents": [
+      "liability"
+    ],
+    "icon": "J",
     "summary": "Pays a lawyer in a dispute about your car, home or neighbours.",
-    "product": { "name": "NovaLegal Household", "monthly": 12, "pitch": "Legal costs for traffic, property and consumer disputes." } },
-  { "id": "contents", "label": "Student / kot contents", "tier": 2, "parents": ["home"], "icon": "K",
+    "product": {
+      "name": "Car legal assistance",
+      "monthly": 12,
+      "pitch": "Legal costs for traffic, property and consumer disputes."
+    },
+    "kbcProduct": "car-legal"
+  },
+  {
+    "id": "contents",
+    "label": "Student / kot contents",
+    "tier": 2,
+    "parents": [
+      "home"
+    ],
+    "icon": "K",
     "summary": "Belongings and deposit risk in a rented room away from home.",
-    "product": { "name": "NovaKot Contents", "monthly": 5, "pitch": "Laptop, bike and room contents in a student room, plus damage to the landlord's property." } },
-  { "id": "mortgage", "label": "Mortgage protection", "tier": 2, "parents": ["home"], "icon": "M",
+    "product": {
+      "name": "Home contents insurance",
+      "monthly": 5,
+      "pitch": "Laptop, bike and room contents in a student room, plus damage to the landlord's property."
+    },
+    "kbcProduct": "home-contents"
+  },
+  {
+    "id": "mortgage",
+    "label": "Mortgage protection",
+    "tier": 2,
+    "parents": [
+      "home"
+    ],
+    "icon": "M",
     "summary": "Repays the mortgage if a borrower dies.",
-    "product": { "name": "NovaLife Mortgage Protection", "monthly": 24, "pitch": "Offered together with the mortgage pre-approval so it is in place on the day of the deed." } },
-  { "id": "roadside", "label": "Roadside assistance", "tier": 2, "parents": ["car"], "icon": "R",
+    "product": {
+      "name": "KBC Comfort Loan Balance Insurance",
+      "monthly": 24,
+      "pitch": "Offered together with the mortgage pre-approval so it is in place on the day of the deed."
+    },
+    "kbcProduct": "loan-balance"
+  },
+  {
+    "id": "roadside",
+    "label": "Roadside assistance",
+    "tier": 2,
+    "parents": [
+      "car"
+    ],
+    "icon": "R",
     "summary": "Tow, repair on the spot and a replacement car.",
-    "product": { "name": "NovaDrive Assist", "monthly": 7, "pitch": "Breakdown help for an ageing car, at home and abroad." } },
-
-  { "id": "care", "label": "Care & dependency", "tier": 3, "parents": ["hospital"], "icon": "Z",
+    "product": {
+      "name": "KBC-VAB vehicle assistance",
+      "monthly": 7,
+      "pitch": "Breakdown help for an ageing car, at home and abroad."
+    },
+    "kbcProduct": "vab-assistance"
+  },
+  {
+    "id": "care",
+    "label": "Care & dependency",
+    "tier": 3,
+    "parents": [
+      "hospital"
+    ],
+    "icon": "Z",
     "summary": "A monthly amount when you need daily help at home or in a care home.",
-    "product": { "name": "NovaCare Dependency", "monthly": 45, "pitch": "A fixed monthly allowance once home nursing or daily care is needed, in addition to the zorgbudget." } },
-  { "id": "income", "label": "Income protection", "tier": 3, "parents": ["mortgage"], "icon": "I",
+    "product": {
+      "name": "Care & dependency cover (mock, not in the KBC list)",
+      "monthly": 45,
+      "pitch": "A fixed monthly allowance once home nursing or daily care is needed, in addition to the zorgbudget."
+    },
+    "kbcProduct": null
+  },
+  {
+    "id": "income",
+    "label": "Income protection",
+    "tier": 3,
+    "parents": [
+      "mortgage"
+    ],
+    "icon": "I",
     "summary": "Replaces part of your income if you cannot work for a long time.",
-    "product": { "name": "NovaIncome Guard", "monthly": 38, "pitch": "A monthly payout that keeps the mortgage and household costs paid during long illness." } }
+    "product": {
+      "name": "Work-disability cover on loan balance insurance",
+      "monthly": 38,
+      "pitch": "A monthly payout that keeps the mortgage and household costs paid during long illness."
+    },
+    "kbcProduct": "work-disability"
+  }
 ]

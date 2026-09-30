@@ -7,11 +7,10 @@ import type { InsuranceModel, Status } from "@/lib/insurance/model";
 import { EgoMap } from "./EgoMap";
 import { PixelIcon } from "./pixel";
 import { PosterMap } from "./PosterMap";
-import { assetScene, personScene } from "./scenes";
+import { assetScene, categoryScene, groupScene, personScene, stepLabel, type Step } from "./scenes";
 
 type Theme = "kbc" | "dark" | "plain";
 type View = "person" | "family";
-type Step = { asset: string };
 
 const THEME_LABEL: Record<Theme, string> = { kbc: "KBC", dark: "Dark", plain: "Plain" };
 const KIND_LABEL: Record<AssetKind, string> = {
@@ -22,6 +21,9 @@ const KIND_LABEL: Record<AssetKind, string> = {
   loan: "Loan",
   goal: "Saving goal",
   gap: "Missing cover",
+  product: "KBC product",
+  group: "Group",
+  category: "Category",
 };
 const STATE_LABEL: Record<Status, string> = { covered: "Covered", shared: "Covered via family", gap: "Gap", upcoming: "Needed soon", na: "Not relevant" };
 const STATE_CLASS: Record<string, string> = { covered: "ok", shared: "via", gap: "gap", upcoming: "soon" };
@@ -45,8 +47,15 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
   const nodesById = useMemo(() => new Map(model.nodes.map((n) => [n.id, n])), [model.nodes]);
   const person = model.people.find((p) => p.id === personId) ?? model.people[0];
   const here = trail[trail.length - 1];
-  const scene = useMemo(() => (here ? assetScene(ego, here.asset, personId) : personScene(ego, personId)), [ego, here, personId]);
-  const shown = (selectedId && ego.assets[selectedId]) || ego.assets[scene.center.id];
+  const scene = useMemo(() => {
+    if (!here) return personScene(ego, personId);
+    if (here.kind === "group") return groupScene(ego, personId, here.id);
+    if (here.kind === "category") return categoryScene(ego, personId, here.group, here.id);
+    return assetScene(ego, here.id, personId);
+  }, [ego, here, personId]);
+  // Groups and categories are not assets: the scene describes them.
+  const lookup = useCallback((id: string): Asset | undefined => scene.details[id] ?? ego.assets[id], [scene, ego]);
+  const shown = ((selectedId && lookup(selectedId)) || lookup(scene.center.id)) as Asset;
 
   const switchPerson = useCallback((id: string) => {
     setPersonId(id);
@@ -56,10 +65,19 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
   const open = useCallback(
     (id: string) => {
       if (id.startsWith("person:")) return switchPerson(id.slice(7));
-      setTrail((t) => (t[t.length - 1]?.asset === id ? t : [...t, { asset: id }]));
+      let step: Step;
+      if (id.startsWith("grp:")) step = { kind: "group", id: id.slice(4) };
+      else if (id.startsWith("cat:")) {
+        const [, group, cid] = id.split(":");
+        step = { kind: "category", group, id: cid };
+      } else if (id.startsWith("kbc:")) {
+        // A catalogue product opens as whatever this person has of it: their policy, or their gap.
+        step = { kind: "asset", id: ego.assets[id]?.via?.[personId] ?? id };
+      } else step = { kind: "asset", id };
+      setTrail((t) => (JSON.stringify(t[t.length - 1]) === JSON.stringify(step) ? t : [...t, step]));
       setSelectedId(null);
     },
-    [switchPerson],
+    [switchPerson, ego, personId],
   );
   const back = useCallback(() => {
     setTrail((t) => t.slice(0, -1));
@@ -99,13 +117,26 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
   const monthly = proposalNodes.reduce((s, n) => s + n.product.monthly, 0);
 
   // What the panel says about the selection, for the person being looked at.
-  const state = shown.kind === "policy" ? (shown.personState[personId] ?? shown.state) : shown.state;
+  const state = shown.kind === "policy" || shown.kind === "product" ? (shown.personState[personId] ?? (shown.kind === "product" ? "neutral" : shown.state)) : shown.state;
   // A person is tied to everything they own, which is the map itself: the panel lists only their family and the accounts they manage.
-  const connections = shown.related.filter((r) => ego.assets[r.id] && (shown.kind !== "person" || r.id.startsWith("person:") || /proxy|shared view/.test(r.relation)));
+  const connections = shown.related.filter((r) => lookup(r.id) && (shown.kind !== "person" || r.id.startsWith("person:") || /proxy|shared view/.test(r.relation)));
+  // What would close a gap: the gap itself, or a catalogue product this person is missing.
+  const viaAsset = shown.kind === "product" ? ego.assets[shown.via?.[personId] ?? ""] : undefined;
+  const offer = shown.kind === "gap" ? shown : viaAsset?.kind === "gap" ? viaAsset : undefined;
   const relatedIds = connections.map((r) => r.id);
   const canOpen = shown.id !== scene.center.id && shown.kind !== "person";
   const canSwitch = shown.kind === "person" && shown.id !== `person:${personId}`;
   const household = model.households.find((h) => h.memberIds.includes(personId));
+
+  // The switcher is about the person being looked at: their spouse, children, parents, and so on.
+  const menuGroups = useMemo(() => {
+    const LABEL: [string, string][] = [["spouse", "Spouse"], ["child", "Children"], ["parent", "Parents"], ["sibling", "Siblings"], ["grandparent", "Grandparents"], ["grandchild", "Grandchildren"]];
+    const rel = ego.family[personId] ?? [];
+    const groups = LABEL.map(([key, label]) => ({ label, ids: rel.filter((r) => r.relation === key).map((r) => r.id) })).filter((g) => g.ids.length > 0);
+    const listed = new Set([personId, ...groups.flatMap((g) => g.ids)]);
+    const others = model.people.filter((p) => !listed.has(p.id)).map((p) => p.id);
+    return others.length > 0 ? [...groups, { label: "Others in the family", ids: others }] : groups;
+  }, [ego, model.people, personId]);
 
   return (
     <div className="cw">
@@ -120,14 +151,19 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
             <span aria-hidden="true"> ▾</span>
           </summary>
           <ul>
-            {model.households.map((h) => (
-              <li key={h.id} className="cw-menu-group">
-                <span>{h.address.split(",")[1]?.trim().replace(/^\d+\s/, "")}</span>
-                {h.memberIds.map((id) => (
+            <li className="cw-menu-group">
+              <span>Looking at</span>
+              <button type="button" aria-current="true" onClick={(e) => e.currentTarget.closest("details")?.removeAttribute("open")}>
+                <PixelIcon id={ego.assets[`person:${person.id}`]?.glyph ?? "adult"} size={16} /> {person.name}
+              </button>
+            </li>
+            {menuGroups.map((g) => (
+              <li key={g.label} className="cw-menu-group">
+                <span>{g.label}</span>
+                {g.ids.map((id) => (
                   <button
                     key={id}
                     type="button"
-                    aria-current={id === personId}
                     onClick={(e) => {
                       switchPerson(id);
                       e.currentTarget.closest("details")?.removeAttribute("open");
@@ -192,9 +228,9 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
             <nav aria-label="Where you are">
               <button type="button" onClick={overview} aria-current={trail.length === 0 ? "page" : undefined} disabled={trail.length === 0}>{person.name}</button>
               {trail.map((s, i) => (
-                <span key={`${s.asset}-${i}`}>
+                <span key={`${JSON.stringify(s)}-${i}`}>
                   <span aria-hidden="true"> › </span>
-                  <button type="button" onClick={() => goTo(i + 1)} aria-current={i === trail.length - 1 ? "page" : undefined} disabled={i === trail.length - 1}>{ego.assets[s.asset]?.label}</button>
+                  <button type="button" onClick={() => goTo(i + 1)} aria-current={i === trail.length - 1 ? "page" : undefined} disabled={i === trail.length - 1}>{stepLabel(ego, s, personId)}</button>
                 </span>
               ))}
             </nav>
@@ -206,6 +242,8 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
             </section>
             <Panel
               asset={shown}
+              offer={offer}
+              lookup={lookup}
               state={state}
               personName={person.name}
               connections={connections}
@@ -241,6 +279,8 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
 
 function Panel({
   asset,
+  offer,
+  lookup,
   state,
   personName,
   connections,
@@ -253,6 +293,8 @@ function Panel({
   onToggleProposal,
 }: {
   asset: Asset;
+  offer?: Asset;
+  lookup: (id: string) => Asset | undefined;
   state: Asset["state"];
   personName: string;
   connections: Asset["related"];
@@ -281,15 +323,15 @@ function Panel({
         <button type="button" className="cw-open" onClick={onOpen}>Look at {asset.label}'s cover</button>
       ) : null}
 
-      {asset.product ? (
+      {offer?.product ? (
         <div className="cw-offer">
           <p className="cw-kind">Would close this</p>
-          <p className="cw-offer-name">{asset.product.name}</p>
-          <p>{asset.product.pitch}</p>
-          <p className="cw-muted">From €{asset.product.monthly} / month (mock price)</p>
-          {asset.coverId ? (
-            <button type="button" className="cw-add" aria-pressed={proposal.includes(asset.coverId)} onClick={() => onToggleProposal(asset.coverId as string)}>
-              {proposal.includes(asset.coverId) ? "Remove from proposal" : "Add to proposal"}
+          <p className="cw-offer-name">{offer.product.name}</p>
+          <p>{offer.product.pitch}</p>
+          <p className="cw-muted">From €{offer.product.monthly} / month (mock price)</p>
+          {offer.coverId ? (
+            <button type="button" className="cw-add" aria-pressed={proposal.includes(offer.coverId)} onClick={() => onToggleProposal(offer.coverId as string)}>
+              {proposal.includes(offer.coverId) ? "Remove from proposal" : "Add to proposal"}
             </button>
           ) : null}
         </div>
@@ -303,7 +345,7 @@ function Panel({
               <div key={`${c.id}-${c.relation}`}>
                 <dt>{c.relation}</dt>
                 <dd>
-                  <button type="button" onClick={() => onJump(c.id)}>{ego.assets[c.id].label}</button>
+                  <button type="button" onClick={() => onJump(c.id)}>{lookup(c.id)?.label}</button>
                 </dd>
               </div>
             ))}

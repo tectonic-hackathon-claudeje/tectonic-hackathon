@@ -35,6 +35,8 @@ interface Placed extends SceneTerritory {
   w: number;
   h: number;
   cols: number;
+  pad: number;
+  header: number;
 }
 interface PlacedNode extends SceneNode {
   x: number;
@@ -46,10 +48,83 @@ function placeTerritory(t: SceneTerritory): Placed {
   const n = t.nodes.length;
   const cols = t.side === "e" || t.side === "w" ? (n > 9 ? 3 : n > 3 ? 2 : 1) : Math.min(n, n > 6 ? 4 : 3);
   const rows = Math.ceil(n / cols);
-  return { ...t, cols, x: 0, y: 0, w: cols * W + PAD * 2, h: rows * H + PAD * 2 + HEADER };
+  const pad = t.bare ? 6 : PAD;
+  const header = t.bare ? 22 : HEADER;
+  return { ...t, cols, pad, header, x: 0, y: 0, w: cols * W + pad * 2, h: rows * H + pad * 2 + header };
 }
 
-function layout(scene: Scene): { territories: Placed[]; nodes: PlacedNode[]; center: PlacedNode } {
+interface Line {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+type Laid = { territories: Placed[]; nodes: PlacedNode[]; center: PlacedNode; lines: Line[] };
+
+const COLW = 200;
+const ROWH = 190;
+
+/** Generations as rows, oldest at the top: parents above, spouse beside, children below. */
+function layoutTree(scene: Scene): Laid {
+  const rows = scene.tree ?? [];
+  const at = new Map<number, { id: string; cx: number }[]>();
+  const spread = (level: number, ids: string[], start: number) => at.set(level, ids.map((id, i) => ({ id, cx: start + i * COLW })));
+  for (const row of rows) {
+    if (row.level === 0) continue;
+    const ids = row.nodes.map((n) => n.id);
+    spread(row.level, ids, (-(ids.length - 1) * COLW) / 2);
+  }
+  // The centre row: the person, their spouse next to them, siblings a little further along.
+  const beside = rows.find((r) => r.level === 0)?.nodes ?? [];
+  const spouse = beside.find((n) => n.caption === "spouse");
+  const siblings = beside.filter((n) => n !== spouse);
+  const row0: { id: string; cx: number }[] = [{ id: scene.center.id, cx: spouse ? -COLW / 2 : 0 }];
+  if (spouse) row0.push({ id: spouse.id, cx: COLW / 2 });
+  siblings.forEach((n, i) => row0.push({ id: n.id, cx: (spouse ? COLW / 2 : 0) + COLW * 1.3 + i * COLW }));
+  at.set(0, row0);
+
+  const nodeById = new Map([scene.center, ...rows.flatMap((r) => r.nodes)].map((n) => [n.id, n]));
+  const placedNodes: PlacedNode[] = [];
+  let center: PlacedNode = { ...scene.center, x: 0, y: 0 };
+  for (const [level, list] of at)
+    for (const { id, cx } of list) {
+      const node = nodeById.get(id);
+      if (!node) continue;
+      const self = id === scene.center.id;
+      const w = self ? CENTER_W : W;
+      const h = self ? CENTER_H : H;
+      const placed = { ...node, x: cx - w / 2, y: level * ROWH - h / 2 };
+      if (self) center = placed;
+      else placedNodes.push(placed);
+    }
+
+  const lines: Line[] = [];
+  const levels = [...at.keys()].sort((a, b) => a - b);
+  for (const level of levels) {
+    const list = at.get(level) ?? [];
+    // Couples (oldest generations and the centre row) are joined by a short line.
+    const couple = level <= 0 ? list.slice(0, 2) : [];
+    if (couple.length === 2 && (level < 0 || spouse)) lines.push({ x1: couple[0].cx + 40, y1: level * ROWH - 12, x2: couple[1].cx - 40, y2: level * ROWH - 12 });
+    // The line down from a couple goes to their own children: not to a child's spouse (level 0), and
+    // from the oldest row only to the first parent listed, whose own parents they are.
+    const all = at.get(level + 1);
+    const below = level + 1 === 0 ? all?.filter((b) => b.id !== spouse?.id) : level < -1 ? all?.slice(0, 1) : all;
+    if (!below || below.length === 0) continue;
+    const parents = level <= 0 ? list.slice(0, 2) : list;
+    const mid = parents.reduce((sum, p) => sum + p.cx, 0) / parents.length;
+    const y0 = level * ROWH + 62;
+    const yBus = level * ROWH + ROWH / 2 + 4;
+    const y1 = (level + 1) * ROWH - 62;
+    const xs = below.map((b) => b.cx);
+    lines.push({ x1: mid, y1: y0, x2: mid, y2: yBus });
+    lines.push({ x1: Math.min(mid, ...xs), y1: yBus, x2: Math.max(mid, ...xs), y2: yBus });
+    for (const b of below) lines.push({ x1: b.cx, y1: yBus, x2: b.cx, y2: y1 });
+  }
+  return { territories: [], nodes: placedNodes, center, lines };
+}
+
+function layout(scene: Scene): Laid {
+  if (scene.tree) return layoutTree(scene);
   const placed = scene.territories.map(placeTerritory);
   const side = (s: string) => placed.find((p) => p.side === s);
   const n = side("n");
@@ -88,9 +163,9 @@ function layout(scene: Scene): { territories: Placed[]; nodes: PlacedNode[]; cen
       // Centre a short last row.
       const inRow = Math.min(t.cols, t.nodes.length - row * t.cols);
       const offset = ((t.cols - inRow) * W) / 2;
-      nodes.push({ ...nd, territory: t.id, x: t.x + PAD + offset + col * W, y: t.y + HEADER + PAD + row * H });
+      nodes.push({ ...nd, territory: t.id, x: t.x + t.pad + offset + col * W, y: t.y + t.header + t.pad + row * H });
     });
-  return { territories: placed, nodes, center: { ...scene.center, x: -CENTER_W / 2, y: -CENTER_H / 2 } };
+  return { territories: placed, nodes, center: { ...scene.center, x: -CENTER_W / 2, y: -CENTER_H / 2 }, lines: [] };
 }
 
 function rectPoint(r: { x: number; y: number; w: number; h: number }, tx: number, ty: number) {
@@ -115,11 +190,17 @@ export interface EgoMapProps {
 }
 
 export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoMapProps) {
-  const { territories, nodes, center } = useMemo(() => layout(scene), [scene]);
+  const { territories, nodes, center, lines } = useMemo(() => layout(scene), [scene]);
   const byId = useMemo(() => new Map([...nodes, center].map((n) => [n.id, n])), [nodes, center]);
 
   const bounds = useMemo(() => {
-    let minX = -CENTER_W / 2, minY = -CENTER_H / 2, maxX = CENTER_W / 2, maxY = CENTER_H / 2;
+    let minX = center.x, minY = center.y, maxX = center.x + CENTER_W, maxY = center.y + CENTER_H;
+    for (const n of nodes) {
+      minX = Math.min(minX, n.x);
+      minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + W);
+      maxY = Math.max(maxY, n.y + H);
+    }
     for (const t of territories) {
       minX = Math.min(minX, t.x);
       minY = Math.min(minY, t.y);
@@ -127,7 +208,7 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
       maxY = Math.max(maxY, t.y + t.h);
     }
     return { minX, minY, maxX, maxY };
-  }, [territories]);
+  }, [territories, nodes, center]);
   const boundsRef = useRef(bounds);
   boundsRef.current = bounds;
 
@@ -251,7 +332,7 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
   const selectedNode = selectedId ? byId.get(selectedId) : undefined;
 
   const renderNode = (n: PlacedNode, big = false) => {
-    const size = big ? 72 : 44;
+    const size = big ? 72 : n.large ? 56 : 44;
     const w = big ? CENTER_W : W;
     const cx = w / 2;
     const top = big ? 14 : 8;
@@ -301,6 +382,9 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
     <div className="em">
       <svg ref={surfaceRef} className="em-surface" role="application" aria-label={`${scene.title}: map`} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={() => (dragRef.current = null)}>
         <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
+          {lines.map((l, i) => (
+            <line key={`tree-${i}`} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="var(--line)" strokeWidth={1.6} strokeLinecap="round" />
+          ))}
           {territories.map((t) => {
             const cp = rectPoint({ x: -CENTER_W / 2, y: -CENTER_H / 2, w: CENTER_W, h: CENTER_H }, t.x + t.w / 2, t.y + t.h / 2);
             const tp = rectPoint(t, 0, 0);
@@ -308,8 +392,14 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
           })}
           {territories.map((t) => (
             <g key={t.id}>
-              <rect x={t.x} y={t.y} width={t.w} height={t.h} rx={16} fill="var(--surface)" fillOpacity={0.45} stroke="var(--line)" />
-              <text x={t.x + 18} y={t.y + 21} fill="var(--muted)" fontSize={10.5} fontWeight={600} letterSpacing="0.1em" style={{ textTransform: "uppercase" }}>{t.label}</text>
+              {t.bare ? (
+                <text x={t.x + t.w / 2} y={t.y + 14} textAnchor="middle" fill="var(--muted)" fontSize={10.5} fontWeight={600} letterSpacing="0.1em" style={{ textTransform: "uppercase" }}>{t.label}</text>
+              ) : (
+                <>
+                  <rect x={t.x} y={t.y} width={t.w} height={t.h} rx={16} fill="var(--surface)" fillOpacity={0.45} stroke="var(--line)" />
+                  <text x={t.x + 18} y={t.y + 21} fill="var(--muted)" fontSize={10.5} fontWeight={600} letterSpacing="0.1em" style={{ textTransform: "uppercase" }}>{t.label}</text>
+                </>
+              )}
             </g>
           ))}
           {selectedNode && selectedNode.id !== center.id
