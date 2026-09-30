@@ -44,6 +44,8 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
   const [requested, setRequested] = useState<string[]>([]);
   // Each insurance has its own conversation, kept while you look at others.
   const [threads, setThreads] = useState<Record<string, Msg[]>>({});
+  // With nothing inspected, a question finds its insurance; if none fits, this says so.
+  const [notice, setNotice] = useState<{ text: string; actions: Action[] } | null>(null);
   const seq = useRef(0);
 
   // The theme belongs to the whole page, so it lives on <html>.
@@ -208,8 +210,28 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
   const addMsgs = (key: string, list: Msg[]) => setThreads((all) => ({ ...all, [key]: [...(all[key] ?? []), ...list] }));
   const send = (text: string) => {
     const t = text.trim();
-    if (!t || speaker.kind === "group") return;
+    if (!t) return;
     const ctx = { ego, model, viewer: VIEWER, personId, mine: alerts.mine, others: alerts.others };
+    if (speaker.kind === "group") {
+      // Nothing is inspected yet: find the insurance the question is about and let it answer in its own thread.
+      const found = answer(t, { ...ctx, shown, speaker });
+      const last = found.navigate?.steps[found.navigate.steps.length - 1];
+      const target = last && last.kind === "asset" ? ego.assets[last.id] : undefined;
+      if (found.navigate) navigate(found.navigate);
+      if (target && (target.kind === "policy" || target.kind === "gap")) {
+        const tSpeaker = speakerFor(target, target.kind === "gap" ? target : undefined, undefined, ego);
+        const tAns = answer(t, { ...ctx, shown: target, speaker: tSpeaker });
+        if (tSpeaker.assetId)
+          addMsgs(tSpeaker.assetId, [
+            { id: id(), role: "user", text: t },
+            { id: id(), role: "assistant", text: tAns.text, actions: tAns.actions, offerGapId: tAns.offerGapId, from: { label: tSpeaker.label, glyph: tSpeaker.glyph } },
+          ]);
+        setNotice(null);
+      } else if (found.navigate) setNotice({ text: `Took you to ${navLabel(found.navigate)}. ${found.text}`, actions: found.actions });
+      else setNotice({ text: found.text, actions: found.actions });
+      if (found.respond) respond(found.respond.gapId, found.respond.reply);
+      return;
+    }
     const ans = answer(t, { ...ctx, shown, speaker });
     const out: Msg[] = [{ id: id(), role: "user", text: t }];
     if (ans.navigate) out.push(goWithNote(ans.navigate));
@@ -256,6 +278,7 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
   const pick = (assetId: string) => {
     const a = ego.assets[assetId];
     if (!a) return;
+    setNotice(null);
     navigate({ steps: a.kind === "gap" ? stepsForGap(a) : [{ kind: "asset", id: a.id }] });
   };
   const worried = alerts.others[0] ? nameOf(alerts.others[0].personIds[0]) : undefined;
@@ -435,6 +458,7 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
                 speaker={speaker}
                 picks={picks}
                 onPick={pick}
+                notice={speaker.kind === "group" ? notice : null}
                 msgs={msgs}
                 chips={chips}
                 opener={opener(speaker, personId === VIEWER, person.name, viewerName)}

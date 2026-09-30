@@ -371,3 +371,7 @@ html[data-theme="dark"] .skip-link { color: var(--accent-ink); }
 .cw-pick { white-space: nowrap; }
 .cw-pick > :last-child { overflow: hidden; text-overflow: ellipsis; }
 .cw-pick em { font-style: normal; overflow: hidden; text-overflow: ellipsis; }
+
+.cw-chat-pick form { margin-top: 0.2rem; }
+.cw-notice { margin: 0 1.25rem 0.7rem; padding: 0.6rem 0.8rem; border-radius: 4px 14px 14px 4px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--bg)); font: 0.92rem/1.4 system-ui, sans-serif; }
+.cw-notice p { margin: 0; }

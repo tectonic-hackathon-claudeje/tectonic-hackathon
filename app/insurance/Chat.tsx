@@ -16,6 +16,7 @@ export function ChatPanel({
   speaker,
   picks,
   onPick,
+  notice,
   msgs,
   chips,
   opener,
@@ -27,6 +28,8 @@ export function ChatPanel({
   speaker: { kind: "policy" | "cover" | "group"; label: string; sub?: string; glyph: string };
   picks: Pick[];
   onPick: (id: string) => void;
+  /** With nothing inspected: a short reply under the bar when no insurance matched the question. */
+  notice?: { text: string; actions: Action[] } | null;
   msgs: Msg[];
   chips: string[];
   opener: string;
@@ -43,7 +46,21 @@ export function ChatPanel({
     if (el) el.scrollTop = el.scrollHeight;
   }, [msgs.length]);
 
-  // Nothing inspected: choose who to talk to.
+  const composer = (placeholder: string, label: string) => (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!q.trim()) return;
+        onSend(q);
+        setQ("");
+      }}
+    >
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} aria-label={label} autoComplete="off" />
+      <button type="submit" aria-label="Send">↑</button>
+    </form>
+  );
+
+  // Nothing inspected: choose who to talk to, or just ask and the right insurance answers.
   if (speaker.kind === "group")
     return (
       <section className="cw-chat cw-chat-pick" aria-label="Talk to an insurance">
@@ -63,6 +80,23 @@ export function ChatPanel({
             </button>
           ))}
         </div>
+        {notice ? (
+          <div className="cw-notice" role="status">
+            <p>{notice.text}</p>
+            {notice.actions.length > 0 ? (
+              <div className="cw-actions">
+                {notice.actions.map((a) =>
+                  a.kind === "link" ? (
+                    <a key={a.label} href={a.href} target="_blank" rel="noopener noreferrer">{a.label} ↗</a>
+                  ) : (
+                    <button key={a.label} type="button" onClick={() => onAction(a)}>{a.label}</button>
+                  ),
+                )}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {composer("Ask any of your insurances…", "Ask your insurances")}
       </section>
     );
 
@@ -117,17 +151,7 @@ export function ChatPanel({
         </div>
       ) : null}
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!q.trim()) return;
-          onSend(q);
-          setQ("");
-        }}
-      >
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask me anything…" aria-label={`Message ${speaker.label}`} autoComplete="off" />
-        <button type="submit" aria-label="Send">↑</button>
-      </form>
+      {composer("Ask me anything…", `Message ${speaker.label}`)}
     </section>
   );
 }
