@@ -37,6 +37,8 @@ export type Asset = {
   kbcId?: string;
   /** For a catalogue product: what to open for each person (their policy, or their gap). */
   via?: Record<string, string>;
+  /** A missing cover told as a short story: what is wrong, and why it matters to this person. */
+  story?: { headline: string; line: string };
 };
 
 
@@ -295,6 +297,7 @@ export function buildEgo(model: InsuranceModel): EgoModel {
         product: n.product,
         priority: c.priority,
         kbcId: kp?.id,
+        story: { headline: n.headline[c.status === "upcoming" ? "upcoming" : "gap"] ?? n.headline.gap ?? n.label, line: c.detail },
       });
       for (const parent of n.parents) {
         const held = model.nodes.find((x) => x.id === parent)?.cells.find((x) => x.personId === c.personId)?.policy;

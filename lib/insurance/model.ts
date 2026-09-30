@@ -41,6 +41,8 @@ export type TreeNode = {
   summary: string;
   /** The KBC product (see data/kbc-insurance-catalogue.json) that would close a gap in this cover. */
   kbcProduct: string | null;
+  /** One short line per status: what is wrong, in plain words. */
+  headline: { gap?: string; upcoming?: string };
   product: Product;
   cells: Cell[];
 };
@@ -150,12 +152,12 @@ export function buildModel(): InsuranceModel {
       }
       const hh = hospitalTx.get(p.householdId);
       const why = hh
-        ? `No hospital cover on file, and a hospital bill of ${money(hh.sum)} was paid out of pocket this year.`
-        : "No hospital cover on file.";
+        ? `${money(hh.sum)} hospital bill paid out of pocket.`
+        : "No hospital cover.";
       return cell(p.id, "gap", why, { priority: p.age >= 65 ? "high" : "medium" });
     },
     liability(p) {
-      return cell(p.id, "gap", "No family liability policy on file for this household.", {
+      return cell(p.id, "gap", "No family liability cover.", {
         priority: p.age < 30 ? "medium" : "low",
       });
     },
@@ -171,13 +173,13 @@ export function buildModel(): InsuranceModel {
         return cell(
           p.id,
           "upcoming",
-          `Covered today under the family policy. Saving for a place of their own (${goalPct(goal)}% of goal): will need a separate policy.`,
+          `Saving for their own place (${goalPct(goal)}% there).`,
           { priority: "high", policy },
         );
       const c = cell(
         p.id,
         own ? "covered" : "shared",
-        own ? `Covered by ${hit.insurer}.` : `Covered under ${hit.insurer}, via the household policy.`,
+        own ? `Covered by ${hit.insurer}.` : "Covered through the household policy.",
         { policy },
       );
       if (hit.renewal_date && own && daysUntil(hit.renewal_date) <= 60)
@@ -201,8 +203,8 @@ export function buildModel(): InsuranceModel {
       if (householdEvents === 0 || p.age < 65) return cell(p.id, "na", "No fraud signals on file.");
       const why =
         events > 0
-          ? `Targeted by a phishing call this year (${events} security events, transfer blocked).`
-          : "Shares accounts with someone targeted by phishing, and has unrecognised recurring card charges.";
+          ? "Phishing call in June, transfer blocked."
+          : "Shares accounts with a scam target.";
       return cell(p.id, "gap", why, { priority: "high" });
     },
     travel(p) {
@@ -210,21 +212,21 @@ export function buildModel(): InsuranceModel {
       if (hit) return cell(p.id, "covered", `Covered through the ${hit.insurer} card.`, { policy: policyRef(hit) });
       const goal = activeGoal(/erasmus|abroad|exchange/i, p.id);
       if (goal)
-        return cell(p.id, "upcoming", `${goal.name} starts ${formatDate(goal.target_date)}. Not named on any travel cover.`, {
+        return cell(p.id, "upcoming", `${goal.name} in ${new Date(goal.target_date).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}. Not covered abroad.`, {
           priority: "high",
         });
       if (p.age < 65 && p.age >= 18)
-        return cell(p.id, "gap", "Not named on the card travel cover, which lists only the cardholder's couple.", { priority: "low" });
+        return cell(p.id, "gap", "Not named on the card's travel cover.", { priority: "low" });
       return cell(p.id, "na", "No travel signals on file.");
     },
     legal(p) {
       const adultOwner = p.age >= 30 && p.age < 65;
       if (!adultOwner) return cell(p.id, "na", "Not indicated for this person.");
-      return cell(p.id, "gap", "Owns a home and a car, with no legal aid cover on file.", { priority: "low" });
+      return cell(p.id, "gap", "Owns a home and a car, with no legal help.", { priority: "low" });
     },
     contents(p) {
       if (!/student/i.test(p.role)) return cell(p.id, "na", "Not indicated for this person.");
-      return cell(p.id, "gap", "Lives in a kot in Leuven: the family home policy does not follow her to a rented room.", {
+      return cell(p.id, "gap", "Student room not covered by the family policy.", {
         priority: "medium",
       });
     },
@@ -233,20 +235,20 @@ export function buildModel(): InsuranceModel {
       if (loan) {
         const hit = policiesFor(/mortgage protection|schuldsaldo/i).find((x) => x.object.includes(loan.loan_id));
         if (hit)
-          return cell(p.id, "covered", `Protects ${money(Number(loan.outstanding_at_snapshot))} still outstanding.`, {
+          return cell(p.id, "covered", `Covers the ${money(Number(loan.outstanding_at_snapshot))} still owed.`, {
             policy: policyRef(hit),
           });
-        return cell(p.id, "gap", "A mortgage with no protection on file.", { priority: "high" });
+        return cell(p.id, "gap", "The mortgage has no protection.", { priority: "high" });
       }
       const goal = activeGoal(/apartment|house|home/i, p.id);
-      if (goal) return cell(p.id, "upcoming", "A first mortgage is likely: protection is best arranged alongside it.", { priority: "medium" });
+      if (goal) return cell(p.id, "upcoming", "A first mortgage is likely soon.", { priority: "medium" });
       return cell(p.id, "na", "No mortgage.");
     },
     roadside(p) {
       const car = insuredBy(policiesFor(/car insurance/i), p.id);
       const spend = garageTx.get(p.householdId);
       if (!car || !spend) return cell(p.id, "na", "No car on file.");
-      return cell(p.id, "gap", `${spend.n} garage bills worth ${money(spend.sum)} this year on an ageing car, and no assistance cover.`, {
+      return cell(p.id, "gap", `${spend.n} garage bills (${money(spend.sum)}) on an ageing car.`, {
         priority: "low",
       });
     },
@@ -254,14 +256,14 @@ export function buildModel(): InsuranceModel {
       if (p.age < 75) return cell(p.id, "na", "Not yet indicated.");
       const care = careTx.get(p.householdId);
       const why = care
-        ? `Home nursing and care costs are rising (${care.n} care-related transactions, a care allowance now paid).`
-        : "Age suggests care needs may come.";
+        ? "Home nursing and care costs are rising."
+        : "Care needs likely with age.";
       return cell(p.id, "gap", why, { priority: care ? "high" : "medium" });
     },
     income(p) {
       const loan = loans.find((l) => l.loan_type === "mortgage" && list(l.borrowers).includes(p.id));
       if (loan && p.age < 60)
-        return cell(p.id, "gap", `${loan.remaining_installments} mortgage instalments left, and nothing replaces income if ${p.name} cannot work.`, {
+        return cell(p.id, "gap", `${loan.remaining_installments} mortgage instalments left, and no income cover.`, {
           priority: "medium",
         });
       return cell(p.id, "na", "Not indicated for this person.");
@@ -276,6 +278,7 @@ export function buildModel(): InsuranceModel {
     icon: n.icon,
     summary: n.summary,
     kbcProduct: n.kbcProduct,
+    headline: n.headline as { gap?: string; upcoming?: string },
     product: n.product,
     cells: people.map((p) => rules[n.id](p)),
   }));

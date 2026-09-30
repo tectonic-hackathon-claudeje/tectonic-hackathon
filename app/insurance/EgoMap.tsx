@@ -49,7 +49,7 @@ function placeTerritory(t: SceneTerritory): Placed {
   const cols = t.side === "e" || t.side === "w" ? (n > 9 ? 3 : n > 3 ? 2 : 1) : Math.min(n, n > 6 ? 4 : 3);
   const rows = Math.ceil(n / cols);
   const pad = t.bare ? 6 : PAD;
-  const header = t.bare ? 22 : HEADER;
+  const header = t.bare ? 4 : HEADER;
   return { ...t, cols, pad, header, x: 0, y: 0, w: cols * W + pad * 2, h: rows * H + pad * 2 + header };
 }
 
@@ -407,9 +407,7 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
           })}
           {territories.map((t) => (
             <g key={t.id}>
-              {t.bare ? (
-                <text x={t.x + t.w / 2} y={t.y + 14} textAnchor="middle" fill="var(--muted)" fontSize={10.5} fontWeight={600} letterSpacing="0.1em" style={{ textTransform: "uppercase" }}>{t.label}</text>
-              ) : (
+              {t.bare ? null : (
                 <>
                   <rect x={t.x} y={t.y} width={t.w} height={t.h} rx={16} fill="var(--surface)" fillOpacity={0.45} stroke="var(--line)" />
                   <text x={t.x + 18} y={t.y + 21} fill="var(--muted)" fontSize={10.5} fontWeight={600} letterSpacing="0.1em" style={{ textTransform: "uppercase" }}>{t.label}</text>

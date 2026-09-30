@@ -80,8 +80,9 @@ function insuranceCategories(ego: EgoModel, personId: string, onlyOpen = false):
         glyph: c.glyph,
         assetIds: (onlyOpen ? open : products).map((p) => `kbc:${p.id}`),
         state: worst(states.filter((s) => s !== "neutral")),
-        caption: onlyOpen ? `${plural(open.length, "missing item")}` : `${have} of ${products.length} covered${gaps ? ` · ${gaps} ${gaps === 1 ? "gap" : "gaps"}` : ""}${soon ? ` · ${soon} soon` : ""}`,
-        detail: `${c.label}: ${products.length} KBC products. ${have} in place for this person, ${gaps} missing${soon ? `, ${soon} needed soon` : ""}.`,
+        // Words, not counts: what should the reader do about this?
+        caption: onlyOpen ? `${open.length} to fix` : gaps + soon > 0 ? `${gaps + soon} to fix` : have > 0 ? "Covered" : "Nothing needed",
+        detail: `${have} of ${products.length} in place.`,
       };
     })
     .filter((c) => (onlyOpen ? c.assetIds.length > 0 : true));
@@ -135,7 +136,7 @@ function groupSummary(ego: EgoModel, personId: string, g: (typeof GROUPS)[number
     case "money": {
       const accounts = mine.money.filter((id) => ego.assets[id].kind === "account").length;
       const cards = mine.money.length - accounts;
-      return { caption: `${plural(accounts, "account")} · ${plural(cards, "card")}`, state: "neutral" as AssetState, detail: "Accounts they own or can see, and their cards." };
+      return { caption: plural(accounts, "account"), state: "neutral" as AssetState, detail: `Accounts they own or can see, and ${plural(cards, "card")}.` };
     }
     case "needs": {
       const states = mine.needs.map((id) => ego.assets[id].state);
@@ -144,10 +145,10 @@ function groupSummary(ego: EgoModel, personId: string, g: (typeof GROUPS)[number
     }
     case "credit": {
       const loans = mine.credit.filter((id) => ego.assets[id].kind === "loan").length;
-      return { caption: `${plural(loans, "loan")} · ${plural(mine.credit.length - loans, "goal")}`, state: "neutral" as AssetState, detail: "What they owe, and what they are saving towards." };
+      return { caption: plural(loans, "loan"), state: "neutral" as AssetState, detail: `${plural(loans, "loan")} and ${plural(mine.credit.length - loans, "saving goal")}.` };
     }
     default:
-      return { caption: plural((ego.family[personId] ?? []).length, "person", "people"), state: "neutral" as AssetState, detail: "The rest of the family, shown in lighter shades. Open one to look at their cover." };
+      return { caption: plural((ego.family[personId] ?? []).length, "person", "people"), state: "neutral" as AssetState, detail: "Open the family tree." };
   }
 }
 
@@ -271,7 +272,7 @@ export function groupScene(ego: EgoModel, personId: string, group: string): Scen
 }
 
 /** Inside a category: the actual products and items. */
-export function categoryScene(ego: EgoModel, personId: string, group: string, category: string): Scene {
+export function categoryScene(ego: EgoModel, personId: string, group: string, category: string, showAll = false): Scene {
   const me = ego.assets[`person:${personId}`];
   const cats = groupCategories(ego, personId, group === "needs" ? "insurance" : group);
   const cat = cats.find((c) => c.id === category) ?? cats[0];
@@ -286,18 +287,23 @@ export function categoryScene(ego: EgoModel, personId: string, group: string, ca
       const a = ego.assets[`kbc:${p.id}`];
       const state = productState(ego, personId, p);
       const via = a.via?.[personId] ? ego.assets[a.via[personId]] : undefined;
-      const caption = state === "neutral" ? "Also offered by KBC" : via?.kind === "policy" ? `${state === "shared" ? "Via family · " : ""}${via.caption.split(" · ")[0]}` : via?.caption ?? "";
+      // One word under each: who provides it, or what to do about it.
+      const caption = state === "neutral" ? "" : via?.kind === "policy" ? (state === "shared" ? "Via family" : via.caption.split(" · ")[0]) : state === "upcoming" ? "Soon" : "Missing";
       return { id: a.id, label: p.short, caption, glyph: p.glyph, state, faded: state === "neutral" };
     };
     const covered = products.filter((p) => ["covered", "shared"].includes(productState(ego, personId, p)));
     const open = products.filter((p) => ["gap", "upcoming"].includes(productState(ego, personId, p)));
     const rest = products.filter((p) => productState(ego, personId, p) === "neutral");
+    const more: SceneTerritory =
+      showAll || rest.length === 0
+        ? { id: "offer", label: "More from KBC", side: "n", nodes: rest.map(asNode) }
+        : { id: "offer", label: "", side: "n", bare: true, nodes: [{ id: `more:${cat.id}`, label: `${rest.length} more`, caption: "KBC products", glyph: cat.glyph, state: "neutral", faded: true }] };
     const territories = ([
       { id: "have", label: "In place", side: "w", nodes: covered.map(asNode) },
-      { id: "open", label: "Missing & coming up", side: "e", nodes: open.map(asNode) },
-      { id: "offer", label: "Also offered by KBC", side: "n", nodes: rest.map(asNode) },
+      { id: "open", label: "To fix", side: "e", nodes: open.map(asNode) },
+      more,
     ] as SceneTerritory[]).filter((t) => t.nodes.length > 0);
-    return { key: `category:${personId}:${group}:${cat.id}`, title: cat.label, subtitle: `${products.length} KBC products · ${covered.length} in place for ${me.label}`, center, territories, details };
+    return { key: `category:${personId}:${group}:${cat.id}${showAll ? ":all" : ""}`, title: cat.label, subtitle: `${covered.length} of ${products.length} in place`, center, territories, details };
   }
 
   const items = cat.assetIds.map((id) => ego.assets[id]).filter(Boolean);
@@ -329,25 +335,19 @@ export function assetScene(ego: EgoModel, assetId: string, personId: string): Sc
   const territories = ([
     {
       id: "who",
-      label: a.kind === "gap" ? "Who it is missing for" : "Who it is for",
+      label: a.kind === "gap" ? "Missing for" : a.kind === "policy" ? "Covers" : a.kind === "product" ? "Applies to" : "Belongs to",
       side: "n",
-      nodes: people.map((p) => ({ id: p.id, label: p.label, caption: a.roles[p.id.replace("person:", "")] ?? p.caption, glyph: p.glyph, state: "neutral" as const, faded: p.id !== `person:${personId}` })),
+      nodes: people.map((p) => ({ id: p.id, label: p.label, caption: "", glyph: p.glyph, state: "neutral" as const, faded: p.id !== `person:${personId}` })),
     },
-    { id: "linked", label: "Tied to", side: "w", nodes: linked.map(({ r, asset }) => node(asset, personId, { caption: r.relation })) },
-    {
-      id: "facts",
-      label: "The details",
-      side: "s",
-      nodes: a.facts.slice(0, 6).map((f) => ({ id: `fact:${assetId}:${f.k}`, label: f.k, caption: f.v, glyph: FACT_GLYPH[f.k] ?? "mortgage", state: "neutral" as const, info: true })),
-    },
+    { id: "linked", label: "Goes with", side: "w", nodes: linked.map(({ asset }) => node(asset, personId)) },
     {
       id: "next",
-      label: "Could grow into",
+      label: "Could add",
       side: "e",
       nodes: next.map((g) => {
         const who = g.personIds[0];
         const name = ego.assets[`person:${who}`]?.label ?? who;
-        return node(g, personId, { caption: `${name} · ${g.caption}`, faded: who !== personId });
+        return node(g, personId, { caption: who === personId ? "" : name, faded: who !== personId });
       }),
     },
   ] as SceneTerritory[]).filter((t) => t.nodes.length > 0);

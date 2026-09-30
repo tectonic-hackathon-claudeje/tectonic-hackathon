@@ -11,7 +11,10 @@
       "monthly": 29,
       "pitch": "Hospital cover with no age ceiling on renewal, for people the family plan does not include."
     },
-    "kbcProduct": "hospitalisation"
+    "kbcProduct": "hospitalisation",
+    "headline": {
+      "gap": "No cover for hospital stays"
+    }
   },
   {
     "id": "liability",
@@ -25,7 +28,10 @@
       "monthly": 8,
       "pitch": "One policy for every person in the household, including adult children living at home or in a kot."
     },
-    "kbcProduct": "family"
+    "kbcProduct": "family",
+    "headline": {
+      "gap": "No liability cover"
+    }
   },
   {
     "id": "home",
@@ -39,7 +45,11 @@
       "monthly": 34,
       "pitch": "Building and contents cover for a new home, with storm, water and theft options."
     },
-    "kbcProduct": "home-owner"
+    "kbcProduct": "home-owner",
+    "headline": {
+      "gap": "Home not covered",
+      "upcoming": "Needs their own home cover"
+    }
   },
   {
     "id": "car",
@@ -53,7 +63,10 @@
       "monthly": 52,
       "pitch": "Liability cover with an omnium level matched to the car's current value."
     },
-    "kbcProduct": "car-bi"
+    "kbcProduct": "car-bi",
+    "headline": {
+      "gap": "Car not covered"
+    }
   },
   {
     "id": "fraud",
@@ -67,7 +80,10 @@
       "monthly": 6,
       "pitch": "Refund cover and a trusted-contact alert that also reaches the family member managing the account."
     },
-    "kbcProduct": "cybersecure"
+    "kbcProduct": "cybersecure",
+    "headline": {
+      "gap": "Exposed to scams and fraud"
+    }
   },
   {
     "id": "travel",
@@ -83,7 +99,11 @@
       "monthly": 11,
       "pitch": "Covers a full exchange semester abroad, including medical costs and repatriation."
     },
-    "kbcProduct": "travel"
+    "kbcProduct": "travel",
+    "headline": {
+      "gap": "Travel not covered",
+      "upcoming": "Going abroad soon"
+    }
   },
   {
     "id": "legal",
@@ -99,7 +119,10 @@
       "monthly": 12,
       "pitch": "Legal costs for traffic, property and consumer disputes."
     },
-    "kbcProduct": "car-legal"
+    "kbcProduct": "car-legal",
+    "headline": {
+      "gap": "No legal help if it goes wrong"
+    }
   },
   {
     "id": "contents",
@@ -115,7 +138,10 @@
       "monthly": 5,
       "pitch": "Laptop, bike and room contents in a student room, plus damage to the landlord's property."
     },
-    "kbcProduct": "home-contents"
+    "kbcProduct": "home-contents",
+    "headline": {
+      "gap": "Room and belongings not covered"
+    }
   },
   {
     "id": "mortgage",
@@ -131,7 +157,11 @@
       "monthly": 24,
       "pitch": "Offered together with the mortgage pre-approval so it is in place on the day of the deed."
     },
-    "kbcProduct": "loan-balance"
+    "kbcProduct": "loan-balance",
+    "headline": {
+      "gap": "Mortgage not protected",
+      "upcoming": "A first mortgage is coming"
+    }
   },
   {
     "id": "roadside",
@@ -147,7 +177,10 @@
       "monthly": 7,
       "pitch": "Breakdown help for an ageing car, at home and abroad."
     },
-    "kbcProduct": "vab-assistance"
+    "kbcProduct": "vab-assistance",
+    "headline": {
+      "gap": "No help if the car breaks down"
+    }
   },
   {
     "id": "care",
@@ -163,7 +196,10 @@
       "monthly": 45,
       "pitch": "A fixed monthly allowance once home nursing or daily care is needed, in addition to the zorgbudget."
     },
-    "kbcProduct": null
+    "kbcProduct": null,
+    "headline": {
+      "gap": "Care costs are coming"
+    }
   },
   {
     "id": "income",
@@ -179,6 +215,9 @@
       "monthly": 38,
       "pitch": "A monthly payout that keeps the mortgage and household costs paid during long illness."
     },
-    "kbcProduct": "work-disability"
+    "kbcProduct": "work-disability",
+    "headline": {
+      "gap": "No income if work stops"
+    }
   }
 ]
