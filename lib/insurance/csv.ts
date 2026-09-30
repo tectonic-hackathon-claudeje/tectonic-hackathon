@@ -4,6 +4,7 @@ import path from "node:path";
 export type Row = Record<string, string>;
 
 const DATA_DIR = path.join(process.cwd(), "data", "novabank_datalake", "csv");
+const EXTRA_DIR = path.join(process.cwd(), "data");
 
 function parse(text: string): string[][] {
   const rows: string[][] = [];
@@ -43,8 +44,8 @@ function parse(text: string): string[][] {
   return rows;
 }
 
-export function readTable(name: string): Row[] {
-  const [header, ...body] = parse(readFileSync(path.join(DATA_DIR, `${name}.csv`), "utf8"));
+export function readTable(name: string, extra = false): Row[] {
+  const [header, ...body] = parse(readFileSync(path.join(extra ? EXTRA_DIR : DATA_DIR, `${name}.csv`), "utf8"));
   return body.map((cells) => Object.fromEntries(header.map((h, i) => [h, cells[i] ?? ""])));
 }
 

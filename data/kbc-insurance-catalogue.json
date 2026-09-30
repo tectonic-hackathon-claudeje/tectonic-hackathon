@@ -29,7 +29,9 @@
       "name": "KBC Home Insurance – owner",
       "short": "Home · owner",
       "covers": "Building / home damage",
-      "glyph": "home"
+      "glyph": "home",
+      "branch": "Building",
+      "alsoIn": []
     },
     {
       "id": "home-tenant",
@@ -37,7 +39,9 @@
       "name": "KBC Home Insurance – tenant",
       "short": "Home · tenant",
       "covers": "Tenant liability + optional contents",
-      "glyph": "home"
+      "glyph": "home",
+      "branch": "Building",
+      "alsoIn": []
     },
     {
       "id": "home-landlord",
@@ -45,7 +49,9 @@
       "name": "KBC Home Insurance – landlord",
       "short": "Home · landlord",
       "covers": "Rented property",
-      "glyph": "key"
+      "glyph": "key",
+      "branch": "Building",
+      "alsoIn": []
     },
     {
       "id": "home-second",
@@ -53,7 +59,19 @@
       "name": "KBC Home Insurance – second home",
       "short": "Second home",
       "covers": "Second residence, owner or tenant",
-      "glyph": "home"
+      "glyph": "home",
+      "branch": "Building",
+      "alsoIn": []
+    },
+    {
+      "id": "fire",
+      "category": "home",
+      "name": "Fire insurance (brandverzekering)",
+      "short": "Fire (brand)",
+      "covers": "Fire and related damage to the building",
+      "glyph": "flame",
+      "branch": "Building",
+      "alsoIn": []
     },
     {
       "id": "home-contents",
@@ -61,7 +79,9 @@
       "name": "Home contents insurance",
       "short": "Home contents",
       "covers": "Furniture, clothing, electronics, bicycles, jewellery, etc.",
-      "glyph": "contents"
+      "glyph": "contents",
+      "branch": "Contents",
+      "alsoIn": []
     },
     {
       "id": "theft",
@@ -69,7 +89,9 @@
       "name": "Theft cover",
       "short": "Theft cover",
       "covers": "Theft / attempted theft of contents",
-      "glyph": "lock"
+      "glyph": "lock",
+      "branch": "Contents",
+      "alsoIn": []
     },
     {
       "id": "garden",
@@ -77,7 +99,9 @@
       "name": "Garden insurance",
       "short": "Garden",
       "covers": "Garden and certain outdoor property",
-      "glyph": "tree"
+      "glyph": "tree",
+      "branch": "Outdoors & liability",
+      "alsoIn": []
     },
     {
       "id": "pool",
@@ -85,7 +109,9 @@
       "name": "Swimming pool insurance",
       "short": "Swimming pool",
       "covers": "Swimming pool-related property",
-      "glyph": "wave"
+      "glyph": "wave",
+      "branch": "Outdoors & liability",
+      "alsoIn": []
     },
     {
       "id": "soil",
@@ -93,15 +119,19 @@
       "name": "Soil decontamination cover",
       "short": "Soil clean-up",
       "covers": "Certain soil-clean-up costs",
-      "glyph": "shovel"
+      "glyph": "shovel",
+      "branch": "Outdoors & liability",
+      "alsoIn": []
     },
     {
       "id": "building-liability",
       "category": "home",
       "name": "Building third-party liability",
-      "short": "Building liability",
+      "short": "Damage from my home",
       "covers": "Liability related to the building/property",
-      "glyph": "liability"
+      "glyph": "liability",
+      "branch": "Outdoors & liability",
+      "alsoIn": []
     },
     {
       "id": "building-legal",
@@ -109,7 +139,9 @@
       "name": "Legal assistance for buildings",
       "short": "Building legal aid",
       "covers": "Legal disputes involving the property",
-      "glyph": "legal"
+      "glyph": "legal",
+      "branch": "Outdoors & liability",
+      "alsoIn": []
     },
     {
       "id": "valuables",
@@ -117,31 +149,39 @@
       "name": "Valuables cover",
       "short": "Valuables",
       "covers": "High-value/unique items such as art and antiques",
-      "glyph": "gem"
+      "glyph": "gem",
+      "branch": "Contents",
+      "alsoIn": []
     },
     {
       "id": "car-bi",
       "category": "mobility",
       "name": "Car insurance – third-party liability (BA/RC)",
-      "short": "Car · liability",
+      "short": "Car (required)",
       "covers": "Mandatory liability cover",
-      "glyph": "car"
+      "glyph": "car",
+      "branch": "Car",
+      "alsoIn": []
     },
     {
       "id": "car-mini",
       "category": "mobility",
       "name": "Partial comprehensive / mini-omnium",
-      "short": "Mini-omnium",
+      "short": "Car · part damage",
       "covers": "Selected damage/theft risks",
-      "glyph": "car"
+      "glyph": "car",
+      "branch": "Car",
+      "alsoIn": []
     },
     {
       "id": "car-omnium",
       "category": "mobility",
       "name": "Fully comprehensive / omnium",
-      "short": "Omnium",
+      "short": "Car · own damage",
       "covers": "Broader damage to own vehicle",
-      "glyph": "car"
+      "glyph": "car",
+      "branch": "Car",
+      "alsoIn": []
     },
     {
       "id": "car-legal",
@@ -149,7 +189,9 @@
       "name": "Car legal assistance",
       "short": "Car legal aid",
       "covers": "Legal disputes after traffic incidents",
-      "glyph": "legal"
+      "glyph": "legal",
+      "branch": "Car",
+      "alsoIn": []
     },
     {
       "id": "driver-accident",
@@ -157,7 +199,9 @@
       "name": "Driver accident insurance",
       "short": "Driver accident",
       "covers": "Bodily injury of the driver, including when at fault",
-      "glyph": "hospital"
+      "glyph": "hospital",
+      "branch": "Car",
+      "alsoIn": []
     },
     {
       "id": "vab-assistance",
@@ -165,7 +209,9 @@
       "name": "KBC-VAB vehicle assistance",
       "short": "KBC-VAB assistance",
       "covers": "Breakdown / roadside assistance",
-      "glyph": "roadside"
+      "glyph": "roadside",
+      "branch": "Help on the road",
+      "alsoIn": []
     },
     {
       "id": "motorcycle",
@@ -173,7 +219,9 @@
       "name": "Motorcycle insurance",
       "short": "Motorcycle",
       "covers": "Motorcycle liability and optional additional cover",
-      "glyph": "bike"
+      "glyph": "bike",
+      "branch": "Two wheels",
+      "alsoIn": []
     },
     {
       "id": "bicycle",
@@ -181,7 +229,9 @@
       "name": "Bicycle insurance",
       "short": "Bicycle",
       "covers": "Theft and accidental damage to bikes/e-bikes",
-      "glyph": "bike"
+      "glyph": "bike",
+      "branch": "Two wheels",
+      "alsoIn": []
     },
     {
       "id": "bicycle-assistance",
@@ -189,15 +239,19 @@
       "name": "Bicycle assistance",
       "short": "Bicycle assistance",
       "covers": "Breakdown assistance for bikes",
-      "glyph": "roadside"
+      "glyph": "roadside",
+      "branch": "Help on the road",
+      "alsoIn": []
     },
     {
       "id": "family",
       "category": "person",
       "name": "KBC Family Insurance",
-      "short": "Family",
+      "short": "Damage to others",
       "covers": "Private third-party liability",
-      "glyph": "liability"
+      "glyph": "liability",
+      "branch": "Family",
+      "alsoIn": []
     },
     {
       "id": "accident",
@@ -205,7 +259,9 @@
       "name": "Personal Accident Insurance",
       "short": "Personal accident",
       "covers": "Personal injuries from everyday accidents",
-      "glyph": "hospital"
+      "glyph": "hospital",
+      "branch": "Family",
+      "alsoIn": []
     },
     {
       "id": "hospitalisation",
@@ -213,7 +269,9 @@
       "name": "KBC Hospitalisation Insurance",
       "short": "Hospitalisation",
       "covers": "Hospital and related medical expenses",
-      "glyph": "hospital"
+      "glyph": "hospital",
+      "branch": "Health & life",
+      "alsoIn": []
     },
     {
       "id": "life",
@@ -221,7 +279,9 @@
       "name": "KBC Life Insurance",
       "short": "Life",
       "covers": "Death benefit for beneficiaries",
-      "glyph": "care"
+      "glyph": "care",
+      "branch": "Health & life",
+      "alsoIn": []
     },
     {
       "id": "funeral",
@@ -229,23 +289,39 @@
       "name": "KBC Funeral Insurance",
       "short": "Funeral",
       "covers": "Funeral-related financial protection",
-      "glyph": "flower"
+      "glyph": "flower",
+      "branch": "Health & life",
+      "alsoIn": []
     },
     {
       "id": "loan-balance",
       "category": "person",
       "name": "KBC Comfort Loan Balance Insurance",
-      "short": "Loan balance",
+      "short": "Loan if I die",
       "covers": "Pays all/part of outstanding loan after death",
-      "glyph": "mortgage"
+      "glyph": "mortgage",
+      "branch": "Loans & safety",
+      "alsoIn": [
+        {
+          "category": "home",
+          "branch": "Loan cover"
+        }
+      ]
     },
     {
       "id": "work-disability",
       "category": "person",
       "name": "Work-disability cover on loan balance insurance",
-      "short": "Work-disability",
+      "short": "Loan if I can't work",
       "covers": "Loan payments following qualifying incapacity",
-      "glyph": "income"
+      "glyph": "income",
+      "branch": "Loans & safety",
+      "alsoIn": [
+        {
+          "category": "home",
+          "branch": "Loan cover"
+        }
+      ]
     },
     {
       "id": "cybersecure",
@@ -253,7 +329,9 @@
       "name": "KBC CyberSecure Insurance",
       "short": "CyberSecure",
       "covers": "Certain scams, fraud and identity theft",
-      "glyph": "fraud"
+      "glyph": "fraud",
+      "branch": "Loans & safety",
+      "alsoIn": []
     },
     {
       "id": "pet",
@@ -261,7 +339,9 @@
       "name": "PetExpert Insurance",
       "short": "PetExpert",
       "covers": "Veterinary costs for dogs/cats; offered with KBC Insurance",
-      "glyph": "paw"
+      "glyph": "paw",
+      "branch": "Family",
+      "alsoIn": []
     },
     {
       "id": "travel",
@@ -269,7 +349,9 @@
       "name": "KBC Travel Insurance",
       "short": "Travel",
       "covers": "Umbrella travel policy",
-      "glyph": "travel"
+      "glyph": "travel",
+      "branch": "The trip",
+      "alsoIn": []
     },
     {
       "id": "travel-assistance",
@@ -277,7 +359,9 @@
       "name": "Travel assistance",
       "short": "Travel assistance",
       "covers": "Medical costs, repatriation, assistance abroad",
-      "glyph": "roadside"
+      "glyph": "roadside",
+      "branch": "Abroad",
+      "alsoIn": []
     },
     {
       "id": "cancellation",
@@ -285,7 +369,9 @@
       "name": "Cancellation cover",
       "short": "Cancellation",
       "covers": "Trip cancellation",
-      "glyph": "flag"
+      "glyph": "flag",
+      "branch": "The trip",
+      "alsoIn": []
     },
     {
       "id": "luggage",
@@ -293,7 +379,9 @@
       "name": "Luggage cover",
       "short": "Luggage",
       "covers": "Loss/damage/theft of luggage",
-      "glyph": "suitcase"
+      "glyph": "suitcase",
+      "branch": "The trip",
+      "alsoIn": []
     },
     {
       "id": "travel-accident",
@@ -301,7 +389,9 @@
       "name": "Travel accident cover",
       "short": "Travel accident",
       "covers": "Death/permanent injury while travelling",
-      "glyph": "hospital"
+      "glyph": "hospital",
+      "branch": "Abroad",
+      "alsoIn": []
     },
     {
       "id": "travel-legal",
@@ -309,12 +399,15 @@
       "name": "Travel legal assistance",
       "short": "Travel legal aid",
       "covers": "Legal disputes connected with travel",
-      "glyph": "legal"
+      "glyph": "legal",
+      "branch": "Abroad",
+      "alsoIn": []
     }
   ],
   "policyCovers": {
     "home": [
-      "home-owner"
+      "home-owner",
+      "fire"
     ],
     "car": [
       "car-bi",

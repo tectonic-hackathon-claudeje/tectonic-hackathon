@@ -263,7 +263,7 @@ export function buildModel(): InsuranceModel {
     income(p) {
       const loan = loans.find((l) => l.loan_type === "mortgage" && list(l.borrowers).includes(p.id));
       if (loan && p.age < 60)
-        return cell(p.id, "gap", `${loan.remaining_installments} mortgage instalments left, and no income cover.`, {
+        return cell(p.id, "gap", `${loan.remaining_installments} mortgage instalments left, and no income cover on file. Check cover through work first.`, {
           priority: "medium",
         });
       return cell(p.id, "na", "Not indicated for this person.");

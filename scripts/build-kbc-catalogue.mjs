@@ -32,7 +32,9 @@ const products = [];
 const policyCovers = {};
 for (const r of records) {
   if (!categories.some((c) => c.id === r.category_id)) categories.push({ id: r.category_id, label: r.category, glyph: r.category_glyph });
-  products.push({ id: r.product_id, category: r.category_id, name: r.product, short: r.short_label, covers: r.covers, glyph: r.glyph });
+  // "also_in" puts a product in a second category too, e.g. "home:Home loan" for loan insurance.
+  const alsoIn = r.also_in ? r.also_in.split("|").map((x) => { const [category, branch] = x.split(":"); return { category, branch }; }) : [];
+  products.push({ id: r.product_id, category: r.category_id, name: r.product, short: r.short_label, covers: r.covers, glyph: r.glyph, branch: r.branch, alsoIn });
   if (r.stands_for_policy) (policyCovers[r.stands_for_policy] ??= []).push(r.product_id);
 }
 const out = {

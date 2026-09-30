@@ -1,0 +1,4 @@
+property_id,address,city,kind,owners,residents,policy_id,note
+PR01,Leuvenselaan 112,3300 Tienen,house,"[""P01"",""P02""]","[""P01"",""P02"",""P05"",""P06""]",INS01,"Family home, mortgage L01"
+PR02,Schaffensestraat 45,3290 Diest,house,"[""P03"",""P04""]","[""P03"",""P04""]",INS05,Paid off
+PR03,Zeedijk 120,8370 Blankenberge,apartment,"[""P01"",""P02""]",[],,"Holiday apartment at the coast. Added demo data, no policy on file."

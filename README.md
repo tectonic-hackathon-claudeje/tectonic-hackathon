@@ -41,3 +41,9 @@ A person-centred map of the mock NovaBank family: the four KBC insurance categor
 - `data/kbc_insurance_catalogue.csv` is the KBC grouping (categories → products). Edit it, then run `npm run build:catalogue` to regenerate `data/kbc-insurance-catalogue.json`.
 - Pixel-art icons are drawn as vectors in `scripts/build-pixel-art.mjs`; `npm run build:pixel-art` regenerates `app/insurance/pixel-art.json`.
 - The family data lake lives in `data/novabank_datalake/` (see its README). All names, prices and cover details are mock.
+
+### More scripts and endpoints for the insurance page
+
+- `npm run build:documents` writes mock PDFs to `public/documents/` (policy conditions, key-information sheets, bank notices). They are clearly marked as mock.
+- `data/properties.csv` lists the homes by address (the Blankenberge apartment is added demo data).
+- `GET /api/assist?q=…&person=P03` runs the same assistant the page uses, for testing and as the place a real LLM would plug in.

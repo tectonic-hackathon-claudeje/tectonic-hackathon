@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "build:catalogue": "node scripts/build-kbc-catalogue.mjs",
-    "build:pixel-art": "node scripts/build-pixel-art.mjs"
+    "build:pixel-art": "node scripts/build-pixel-art.mjs",
+    "build:documents": "python3 scripts/build-mock-documents.py"
   },
   "dependencies": {
     "next": "^15.5.4",

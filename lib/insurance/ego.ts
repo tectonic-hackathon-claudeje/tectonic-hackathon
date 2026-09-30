@@ -2,10 +2,13 @@ import { KBC as kbc } from "./kbc";
 import { list, readTable } from "./csv";
 import type { InsuranceModel, Priority, Product, Status } from "./model";
 
-export type AssetKind = "person" | "policy" | "account" | "card" | "loan" | "goal" | "gap" | "product" | "group" | "category";
+export type AssetKind = "person" | "policy" | "account" | "card" | "loan" | "goal" | "gap" | "product" | "group" | "category" | "property" | "employer";
 export type AssetState = Status | "neutral";
+/** How much of someone's world a viewer may see: their own, a joint account holder, a proxy, view-only, or nothing shared. */
+export type AccessLevel = "self" | "joint" | "proxy" | "view" | "none";
+export type Reply = "not-needed" | "covered-elsewhere";
 
-export type Link = { label: string; href: string; external?: boolean };
+export type Link = { label: string; href: string; external?: boolean; pdf?: boolean };
 export type Fact = { k: string; v: string };
 export type Related = { id: string; relation: string };
 
@@ -39,6 +42,8 @@ export type Asset = {
   via?: Record<string, string>;
   /** A missing cover told as a short story: what is wrong, and why it matters to this person. */
   story?: { headline: string; line: string };
+  /** Plain facts about a person, used to decide what is relevant to them. */
+  meta?: { age?: number; monthly?: number; renews?: string };
 };
 
 
@@ -50,6 +55,8 @@ export type EgoModel = {
   byPerson: Record<string, Territories>;
   /** Other people, nearest first, with how they relate to this person. */
   family: Record<string, { id: string; relation: string }[]>;
+  /** access[viewer][person]: what the viewer may see of that person, from account ownership and mandates. */
+  access: Record<string, Record<string, AccessLevel>>;
 };
 
 const euro = (n: number) => `€${Math.round(n).toLocaleString("en-BE")}`;
@@ -238,7 +245,8 @@ export function buildEgo(model: InsuranceModel): EgoModel {
     const premium = p.frequency === "included" ? "included with the card" : `${euro(Number(p.premium))} ${p.frequency}`;
     const links: Link[] = [];
     if (INSURER_SITE[p.insurer]) links.push({ label: `${p.insurer} website`, href: INSURER_SITE[p.insurer], external: true });
-    if (PRODUCT_PAGE[cover]) links.push({ label: "Product page (mock)", href: `/products/${PRODUCT_PAGE[cover]}` });
+    links.push({ label: "Policy conditions", href: `/documents/policy-${p.policy_id}-conditions.pdf`, external: true, pdf: true });
+    links.push({ label: "Key information", href: `/documents/policy-${p.policy_id}-key-information.pdf`, external: true, pdf: true });
     put({
       id: `pol:${p.policy_id}`,
       kind: "policy",
@@ -262,10 +270,76 @@ export function buildEgo(model: InsuranceModel): EgoModel {
       links,
       coverId: cover,
       products: kbc.policyCovers[cover] ?? [],
+      meta: { monthly: p.frequency === "yearly" ? Number(p.premium) / 12 : p.frequency === "monthly" ? Number(p.premium) : 0, renews: p.renewal_date || undefined },
     });
     if (p.paid_from) relate(`pol:${p.policy_id}`, `acc:${p.paid_from}`, "paid from", "pays premium");
     const loan = loans.find((l) => p.object.includes(l.loan_id));
     if (loan) relate(`pol:${p.policy_id}`, `loan:${loan.loan_id}`, "protects", "protected by");
+    // The house policy and the mortgage on that house belong together.
+    const house = cover === "home" ? loans.find((l) => l.loan_type === "mortgage" && p.object && l.purpose.includes(p.object.split(",")[0])) : undefined;
+    if (house) relate(`pol:${p.policy_id}`, `loan:${house.loan_id}`, "home loan", "insures the house");
+  }
+
+  // --- the homes, by address: which are covered, and which are not
+  for (const pr of readTable("properties", true)) {
+    const owners = list(pr.owners);
+    const residents = list(pr.residents);
+    const policy = pr.policy_id ? assets[`pol:${pr.policy_id}`] : undefined;
+    const city = pr.city.replace(/^\d+\s/, "");
+    const everyone = [...new Set([...owners, ...residents])];
+    const personState: Record<string, Status> = {};
+    for (const p of everyone) personState[p] = policy ? (owners.includes(p) ? "covered" : "shared") : "gap";
+    const id = `prop:${pr.property_id}`;
+    put({
+      id,
+      kind: "property",
+      label: pr.address,
+      caption: city,
+      glyph: pr.kind === "apartment" ? "building" : "home",
+      state: policy ? "covered" : "gap",
+      personIds: everyone,
+      roles: { ...Object.fromEntries(owners.map((o) => [o, "owner"])), ...Object.fromEntries(residents.filter((r) => !owners.includes(r)).map((r) => [r, "lives here"])) },
+      personState,
+      detail: `${pr.kind === "apartment" ? "Apartment" : "House"} in ${city}. ${pr.note}`,
+      facts: [
+        { k: "Address", v: `${pr.address}, ${pr.city}` },
+        { k: "Owned by", v: namesOf(owners) },
+        { k: "Cover", v: policy ? `${policy.caption}` : "No home policy on file" },
+      ],
+      source: "Properties list",
+    });
+    if (policy) relate(id, policy.id, "insured by", "insures");
+    const mortgage = loans.find((l) => l.loan_type === "mortgage" && l.purpose.includes(pr.address));
+    if (mortgage) relate(id, `loan:${mortgage.loan_id}`, "mortgage", "on the house");
+
+    // A home with no policy is a missing cover for whoever owns it.
+    const kp = kbc.products.find((x) => x.id === "home-second");
+    const homeNode = model.nodes.find((n) => n.id === "home");
+    if (!policy && kp && homeNode) {
+      for (const owner of owners) {
+        const gapId = `gap:home-second:${owner}`;
+        put({
+          id: gapId,
+          kind: "gap",
+          label: pr.address,
+          caption: "Missing",
+          glyph: "building",
+          state: "gap",
+          personIds: [owner],
+          roles: { [owner]: "missing" },
+          detail: `${pr.address} in ${city} has no home policy on file.`,
+          facts: [{ k: "Would close it", v: kp.name }, { k: "Indicative price", v: `from €${homeNode.product.monthly} / month (estimate)` }],
+          source: "Rules over policies and properties",
+          links: [{ label: "Key information", href: `/documents/product-${kp.id}.pdf`, external: true, pdf: true }],
+          coverId: "home",
+          product: { ...homeNode.product, name: kp.name },
+          priority: "medium",
+          kbcId: kp.id,
+          story: { headline: `Apartment in ${city} not covered`, line: `Owned by ${namesOf(owners)}, with no home policy on file.` },
+        });
+        relate(id, gapId, "missing cover");
+      }
+    }
   }
 
   // --- gaps and upcoming needs, one per person per cover
@@ -274,7 +348,7 @@ export function buildEgo(model: InsuranceModel): EgoModel {
       if (c.status !== "gap" && c.status !== "upcoming") continue;
       const id = `gap:${n.id}:${c.personId}`;
       const kp = kbc.products.find((x) => x.id === n.kbcProduct);
-      const links: Link[] = PRODUCT_PAGE[n.id] ? [{ label: "Related product page (mock)", href: `/products/${PRODUCT_PAGE[n.id]}` }] : [];
+      const links: Link[] = kp ? [{ label: "Key information", href: `/documents/product-${kp.id}.pdf`, external: true, pdf: true }] : [];
       put({
         id,
         kind: "gap",
@@ -305,6 +379,13 @@ export function buildEgo(model: InsuranceModel): EgoModel {
       }
     }
 
+  // --- the bank's own documents, on what they are about
+  for (const d of readTable("documents")) {
+    const about = (d.related || "").split(/[\s,;|]+/).filter(Boolean);
+    const link: Link = { label: d.title, href: `/documents/doc-${d.doc_id}.pdf`, external: true, pdf: true };
+    for (const id of about) for (const key of [`acc:${id}`, `loan:${id}`, `pol:${id}`, `goal:${id}`]) if (assets[key]) assets[key].links.push(link);
+  }
+
   // --- people, and how they relate
   const family: EgoModel["family"] = {};
   for (const p of persons) {
@@ -327,6 +408,7 @@ export function buildEgo(model: InsuranceModel): EgoModel {
         { k: "Customer since", v: when(p.customer_since) },
       ],
       source: `NovaBank data lake · persons ${p.person_id}`,
+      meta: { age: Number(p.age_at_snapshot) },
     });
   }
   for (const r of relationships) {
@@ -344,6 +426,27 @@ export function buildEgo(model: InsuranceModel): EgoModel {
     const seen = new Set<string>();
     family[pid] = rels.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
     for (const r of family[pid]) assets[`person:${pid}`]?.related.push({ id: `person:${r.id}`, relation: r.relation });
+  }
+
+  // --- cover through work: what we know is that an employer exists, not what it gives
+  for (const p of persons.filter((x) => x.employer)) {
+    const employer = p.employer.replace(/\s*\(.*\)\s*$/, "").replace(/\s+(NV|BV|BVBA|VZW)$/i, "");
+    const note = policies.find((x) => list(x.insured).includes(p.person_id) && /employer/i.test(x.note))?.note;
+    put({
+      id: `work:${p.person_id}`,
+      kind: "employer",
+      label: employer,
+      caption: "Through work",
+      glyph: "building",
+      state: "neutral",
+      personIds: [p.person_id],
+      roles: { [p.person_id]: "employee" },
+      detail: `${employer} may offer group insurance. I don\u2019t have the details.`,
+      facts: [{ k: "Employer", v: employer }, ...(note ? [{ k: "Worth a look", v: note }] : [])],
+      source: "Employer on file",
+      priority: "medium",
+      story: { headline: "Check insurance through work", line: `${employer} may give you hospital, pension or income cover. Worth knowing before you buy anything.` },
+    });
   }
 
   // --- the KBC catalogue: each product, and what it means for each person
@@ -381,6 +484,7 @@ export function buildEgo(model: InsuranceModel): EgoModel {
         { k: "Group", v: categoryLabel.get(kp.category) ?? kp.category },
       ],
       source: "KBC insurance grouping agreed by the team · kbc-insurance-catalogue.json",
+      links: [{ label: "Key information", href: `/documents/product-${kp.id}.pdf`, external: true, pdf: true }],
     });
   }
 
@@ -395,5 +499,19 @@ export function buildEgo(model: InsuranceModel): EgoModel {
       needs: mine(["gap"]).sort((a, b) => Number(assets[b].state === "upcoming") - Number(assets[a].state === "upcoming")),
     };
   }
-  return { assets, byPerson, family };
+  // --- who may see whose world: from who owns or has been given access to each account
+  const matrix: EgoModel["access"] = {};
+  for (const v of model.people) {
+    matrix[v.id] = {};
+    for (const t of model.people) {
+      if (v.id === t.id) {
+        matrix[v.id][t.id] = "self";
+        continue;
+      }
+      const theirs = Object.values(assets).filter((a) => a.kind === "account" && a.personIds.includes(t.id));
+      const roles = theirs.map((a) => a.roles[v.id] ?? "");
+      matrix[v.id][t.id] = theirs.some((a) => a.roles[v.id] === "owner") ? "joint" : roles.some((r) => /proxy mandate/.test(r)) ? "proxy" : roles.some((r) => /proxy view|shared view/.test(r)) ? "view" : "none";
+    }
+  }
+  return { assets, byPerson, family, access: matrix };
 }

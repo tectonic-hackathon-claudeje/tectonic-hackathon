@@ -87,6 +87,17 @@ const ICONS = {
     ink: `<path d="M6 4c0 6 2.5 8.5 6 8.5S18 10 18 4l-3.2 2.2L12 3 9.2 6.2z"/><path d="M12 12.5V22"/>`,
     acc: `<path d="M12 19c-4-.5-6-2.5-6-5 4 0 6 2 6 5z" ${F}/>`,
   },
+  pdf: { soft: `<path d="M5 2h9l5 5v15H5z"/>`, ink: `<path d="M5 2h9l5 5v15H5z"/><path d="M14 2v5h5"/>`, acc: `<path d="M8 13h8M8 17h8"/>` },
+  building: {
+    soft: `<rect x="5" y="3" width="14" height="18"/>`,
+    ink: `<rect x="5" y="3" width="14" height="18"/><path d="M3 21h18"/>`,
+    acc: `<path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>`,
+  },
+  flame: {
+    soft: `<path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-4 3-6 1 2 2 2 3 1 .5-2-.5-4 0-7z"/>`,
+    ink: `<path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-4 3-6 1 2 2 2 3 1 .5-2-.5-4 0-7z"/>`,
+    acc: `<path d="M12 21a3 3 0 0 1-3-3c0-2 2-2.5 3-4.5 1 2 3 2.5 3 4.5a3 3 0 0 1-3 3z" ${F}/>`,
+  },
   car: {
     soft: `<path d="M2 16v-3l2.5-5.5A2 2 0 0 1 6.4 6h11.2a2 2 0 0 1 1.9 1.5L22 13v3z"/><circle cx="7" cy="17.5" r="2.5"/><circle cx="17" cy="17.5" r="2.5"/>`,
     ink: `<path d="M2 16v-3l2.5-5.5A2 2 0 0 1 6.4 6h11.2a2 2 0 0 1 1.9 1.5L22 13v3z"/><circle cx="7" cy="17.5" r="2.5"/><circle cx="17" cy="17.5" r="2.5"/>`,

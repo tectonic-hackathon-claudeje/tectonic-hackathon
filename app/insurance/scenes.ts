@@ -13,6 +13,8 @@ export type SceneNode = {
   info?: boolean;
   /** A group or category: one picture standing for several things. */
   large?: boolean;
+  /** In a family tree: this is the centre person's spouse, placed beside them. */
+  spouse?: boolean;
 };
 export type Side = "n" | "e" | "s" | "w" | "s2" | "ne" | "nw" | "se" | "sw";
 /** `bare` territories hold one picture with its label above it, without a frame. */
@@ -40,8 +42,10 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 const GROUPS = [
   { id: "money", label: "Accounts & cards", glyph: "bank", side: "nw" as const },
   { id: "credit", label: "Borrowing & saving", glyph: "key", side: "sw" as const },
-  { id: "family", label: "Family", glyph: "family", side: "se" as const },
+  { id: "family", label: "Family tree", glyph: "family", side: "se" as const },
 ];
+/** Only these sit around the person on the insurance map. Accounts and loans are not insurance; they open from a policy or by asking. */
+const ON_MAP = new Set(["family"]);
 const SIDES: Side[] = ["n", "w", "e", "s"];
 
 const node = (a: Asset, personId: string, overrides: Partial<SceneNode> = {}): SceneNode => ({
@@ -50,7 +54,7 @@ const node = (a: Asset, personId: string, overrides: Partial<SceneNode> = {}): S
   caption: a.caption,
   glyph: a.glyph,
   // A policy can be yours, or cover you through someone else: show the state for this person.
-  state: a.kind === "policy" ? (a.personState[personId] ?? a.state) : a.state,
+  state: a.kind === "policy" || a.kind === "property" ? (a.personState[personId] ?? a.state) : a.state,
   ...overrides,
 });
 
@@ -65,10 +69,65 @@ function productState(ego: EgoModel, personId: string, p: KbcProduct): AssetStat
   return ego.assets[`kbc:${p.id}`]?.personState[personId] ?? "neutral";
 }
 
+/** What kind of situation this person is in, worked out from what they own, owe and hold. */
+function profile(ego: EgoModel, personId: string) {
+  const policies = Object.values(ego.assets).filter((a) => a.kind === "policy");
+  const mine = (glyph: string, state?: string) => policies.some((a) => a.glyph === glyph && (state ? a.personState[personId] === state : Boolean(a.personState[personId])));
+  return {
+    age: ego.assets[`person:${personId}`]?.meta?.age ?? 40,
+    ownsHome: mine("home", "covered"),
+    hasCar: mine("car", "covered"),
+    hasLoan: ego.byPerson[personId]?.credit.some((id) => ego.assets[id]?.kind === "loan") ?? false,
+  };
+}
+
+/** Does this product make sense for this person? A student does not own a house; a pensioner has no loan insurance to buy. */
+function relevant(ego: EgoModel, personId: string, p: KbcProduct, inCategory?: string): boolean {
+  const f = profile(ego, personId);
+  const st = productState(ego, personId, p);
+  // A product that lives in two categories (loan insurance) is shown once: with the house if there is a
+  // mortgage or a house in the picture, otherwise with the person.
+  if (inCategory && p.alsoIn.length > 0) return inCategory === (f.hasLoan || st !== "neutral" ? p.alsoIn[0].category : p.category);
+  if (st !== "neutral") return true; // anything in place, missing or coming up is always shown
+  switch (p.id) {
+    case "home-owner":
+    case "fire":
+    case "garden":
+    case "pool":
+    case "soil":
+      return f.ownsHome;
+    case "home-tenant":
+      return !f.ownsHome;
+    case "home-landlord":
+    case "home-second":
+    case "motorcycle":
+    case "pet":
+      return false;
+    case "loan-balance":
+    case "work-disability":
+      return f.hasLoan;
+    case "car-bi":
+    case "car-mini":
+    case "car-omnium":
+    case "car-legal":
+    case "driver-accident":
+    case "vab-assistance":
+      return f.hasCar;
+    case "bicycle":
+    case "bicycle-assistance":
+      return true;
+    case "life":
+    case "funeral":
+      return f.age >= 40;
+    default:
+      return true;
+  }
+}
+
 function insuranceCategories(ego: EgoModel, personId: string, onlyOpen = false): Category[] {
   return KBC.categories
     .map((c) => {
-      const products = KBC.products.filter((p) => p.category === c.id);
+      const products = KBC.products.filter((p) => (p.category === c.id || p.alsoIn.some((a) => a.category === c.id)) && relevant(ego, personId, p, c.id));
       const states = products.map((p) => productState(ego, personId, p));
       const have = states.filter((s) => s === "covered" || s === "shared").length;
       const gaps = states.filter((s) => s === "gap").length;
@@ -81,7 +140,7 @@ function insuranceCategories(ego: EgoModel, personId: string, onlyOpen = false):
         assetIds: (onlyOpen ? open : products).map((p) => `kbc:${p.id}`),
         state: worst(states.filter((s) => s !== "neutral")),
         // Words, not counts: what should the reader do about this?
-        caption: onlyOpen ? `${open.length} to fix` : gaps + soon > 0 ? `${gaps + soon} to fix` : have > 0 ? "Covered" : "Nothing needed",
+        caption: onlyOpen ? `${open.length} to look at` : gaps + soon > 0 ? `${gaps + soon} to look at` : have > 0 ? "Covered" : "Nothing needed",
         detail: `${have} of ${products.length} in place.`,
       };
     })
@@ -175,6 +234,7 @@ export function personScene(ego: EgoModel, personId: string): Scene {
   });
 
   for (const g of GROUPS) {
+    if (!ON_MAP.has(g.id)) continue;
     const n = groupCount(ego, personId, g.id);
     if (n === 0) continue;
     const sum = groupSummary(ego, personId, g);
@@ -241,7 +301,7 @@ export function groupScene(ego: EgoModel, personId: string, group: string): Scen
     for (const r of [...(ego.family[personId] ?? [])].sort((a, b) => ORDER.indexOf(a.relation) - ORDER.indexOf(b.relation))) {
       const p = ego.assets[`person:${r.id}`];
       const level = LEVEL[r.relation] ?? 0;
-      rows.set(level, [...(rows.get(level) ?? []), { id: p.id, label: p.label, caption: r.relation, glyph: p.glyph, state: "neutral" as const, faded: true }]);
+      rows.set(level, [...(rows.get(level) ?? []), { id: p.id, label: p.label, caption: "", glyph: p.glyph, state: "neutral" as const, faded: true, spouse: r.relation === "spouse" }]);
     }
     const self: SceneNode = { ...center, id: me.id, label: me.label, caption: me.caption, glyph: me.glyph, state: "neutral" };
     details[self.id] = me;
@@ -272,7 +332,7 @@ export function groupScene(ego: EgoModel, personId: string, group: string): Scen
 }
 
 /** Inside a category: the actual products and items. */
-export function categoryScene(ego: EgoModel, personId: string, group: string, category: string, showAll = false): Scene {
+export function categoryScene(ego: EgoModel, personId: string, group: string, category: string): Scene {
   const me = ego.assets[`person:${personId}`];
   const cats = groupCategories(ego, personId, group === "needs" ? "insurance" : group);
   const cat = cats.find((c) => c.id === category) ?? cats[0];
@@ -282,28 +342,42 @@ export function categoryScene(ego: EgoModel, personId: string, group: string, ca
 
   const insurance = group === "insurance" || group === "needs";
   if (insurance) {
-    const products = KBC.products.filter((p) => p.category === cat.id);
     const asNode = (p: KbcProduct): SceneNode => {
       const a = ego.assets[`kbc:${p.id}`];
       const state = productState(ego, personId, p);
       const via = a.via?.[personId] ? ego.assets[a.via[personId]] : undefined;
       // One word under each: who provides it, or what to do about it.
-      const caption = state === "neutral" ? "" : via?.kind === "policy" ? (state === "shared" ? "Via family" : via.caption.split(" · ")[0]) : state === "upcoming" ? "Soon" : "Missing";
+      const caption = state === "neutral" ? "" : via?.kind === "policy" ? (state === "shared" ? "Via family" : via.caption.split(" · ")[0]) : state === "upcoming" ? "Soon" : "Not covered";
       return { id: a.id, label: p.short, caption, glyph: p.glyph, state, faded: state === "neutral" };
     };
-    const covered = products.filter((p) => ["covered", "shared"].includes(productState(ego, personId, p)));
-    const open = products.filter((p) => ["gap", "upcoming"].includes(productState(ego, personId, p)));
-    const rest = products.filter((p) => productState(ego, personId, p) === "neutral");
-    const more: SceneTerritory =
-      showAll || rest.length === 0
-        ? { id: "offer", label: "More from KBC", side: "n", nodes: rest.map(asNode) }
-        : { id: "offer", label: "", side: "n", bare: true, nodes: [{ id: `more:${cat.id}`, label: `${rest.length} more`, caption: "KBC products", glyph: cat.glyph, state: "neutral", faded: true }] };
-    const territories = ([
-      { id: "have", label: "In place", side: "w", nodes: covered.map(asNode) },
-      { id: "open", label: "To fix", side: "e", nodes: open.map(asNode) },
-      more,
-    ] as SceneTerritory[]).filter((t) => t.nodes.length > 0);
-    return { key: `category:${personId}:${group}:${cat.id}${showAll ? ":all" : ""}`, title: cat.label, subtitle: `${covered.length} of ${products.length} in place`, center, territories, details };
+    // Sub-branches: each product sits in one, in the order the team's list gives them. Loan insurance sits with
+    // the house as well, next to the mortgage itself.
+    const branches = new Map<string, SceneNode[]>();
+    const put = (label: string, node: SceneNode) => branches.set(label, [...(branches.get(label) ?? []), node]);
+    // The homes themselves, by address, with whether each is covered.
+    const homes = cat.id === "home" ? Object.values(ego.assets).filter((x) => x.kind === "property" && x.personIds.includes(personId)) : [];
+    const hasHomes = homes.length > 0;
+    if (cat.id === "home")
+      for (const a of homes) {
+        const st = a.personState[personId] ?? a.state;
+        put("Your homes", node(a, personId, { caption: st === "gap" ? "Not covered" : a.caption }));
+      }
+    // Cover through work sits with the person, next to what they bought themselves.
+    const work = cat.id === "person" ? ego.assets[`work:${personId}`] : undefined;
+    if (work) put("Through work", node(work, personId, { caption: "Check what you get" }));
+    const mortgage = cat.id === "home" ? ego.byPerson[personId].credit.map((id) => ego.assets[id]).find((a) => a?.kind === "loan" && a.glyph === "key") : undefined;
+    if (mortgage) put("Loan cover", node(mortgage, personId));
+    for (const p of KBC.products) {
+      const own = p.category === cat.id ? p.branch : p.alsoIn.find((x) => x.category === cat.id)?.branch;
+      // A home shows as its address, with its cover: the owner, fire and second-home products are not listed again.
+      if (hasHomes && ["home-owner", "fire", "home-second"].includes(p.id)) continue;
+      if (own && relevant(ego, personId, p, cat.id)) put(own, asNode(p));
+    }
+    const SIDES5: Side[] = ["n", "w", "e", "s", "s2"];
+    const territories: SceneTerritory[] = [...branches.entries()].map(([label, nodes], i) => ({ id: label, label, side: SIDES5[i % SIDES5.length], nodes }));
+    const all = [...branches.values()].flat().filter((n) => !n.id.startsWith("loan:"));
+    const have = all.filter((n) => n.state === "covered" || n.state === "shared").length;
+    return { key: `category:${personId}:${group}:${cat.id}`, title: cat.label, subtitle: `${have} of ${all.length} in place`, center, territories, details };
   }
 
   const items = cat.assetIds.map((id) => ego.assets[id]).filter(Boolean);
@@ -355,7 +429,7 @@ export function assetScene(ego: EgoModel, assetId: string, personId: string): Sc
     key: `asset:${assetId}`,
     title: a.label,
     subtitle: `${a.caption}`,
-    center: { id: a.id, label: a.label, caption: a.caption, glyph: a.glyph, state: a.kind === "policy" ? (a.personState[personId] ?? a.state) : a.state },
+    center: { id: a.id, label: a.label, caption: a.caption, glyph: a.glyph, state: a.kind === "policy" || a.kind === "property" ? (a.personState[personId] ?? a.state) : a.state },
     territories,
     details: {},
   };

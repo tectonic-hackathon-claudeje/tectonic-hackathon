@@ -76,7 +76,7 @@ function layoutTree(scene: Scene): Laid {
   }
   // The centre row: the person, their spouse next to them, siblings a little further along.
   const beside = rows.find((r) => r.level === 0)?.nodes ?? [];
-  const spouse = beside.find((n) => n.caption === "spouse");
+  const spouse = beside.find((n) => n.spouse);
   const siblings = beside.filter((n) => n !== spouse);
   const row0: { id: string; cx: number }[] = [{ id: scene.center.id, cx: spouse ? -COLW / 2 : 0 }];
   if (spouse) row0.push({ id: spouse.id, cx: COLW / 2 });
@@ -233,9 +233,12 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
   const animRef = useRef<number | null>(null);
   const movedRef = useRef(false);
 
+  const settleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stopAnim = () => {
     if (animRef.current !== null) cancelAnimationFrame(animRef.current);
     animRef.current = null;
+    if (settleRef.current !== null) clearTimeout(settleRef.current);
+    settleRef.current = null;
   };
   const animateTo = useCallback((to: { x: number; y: number; k: number }, ms = 480) => {
     stopAnim();
@@ -248,6 +251,12 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
       animRef.current = t < 1 ? requestAnimationFrame(step) : null;
     };
     animRef.current = requestAnimationFrame(step);
+    // Frames can be throttled (a background tab, a busy page): the camera must still end up where it was sent.
+    settleRef.current = setTimeout(() => {
+      if (animRef.current !== null) cancelAnimationFrame(animRef.current);
+      animRef.current = null;
+      setView(to);
+    }, ms + 60);
   }, []);
 
   const fit = useCallback(
@@ -352,7 +361,7 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
     const selected = n.id === selectedId;
     const faded = n.faded && !selected;
     const color = STATE_COLOR[n.state];
-    const ring = n.state === "neutral" || n.info ? "var(--line)" : color;
+    const inPlace = n.state === "covered" || n.state === "shared";
     return (
       <g
         key={n.id}
@@ -382,10 +391,22 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
         }}
       >
         <title>{`${n.label}: ${n.caption}`}</title>
-        <rect width={w} height={big ? CENTER_H : H} rx={10} fill="var(--bg)" stroke={selected ? "var(--accent)" : "none"} strokeWidth={1.5} />
-        <circle cx={cx} cy={top + size / 2 + 2} r={size / 2 + 8} fill={n.state === "covered" || n.state === "shared" ? "var(--surface)" : "none"} stroke={ring} strokeWidth={1.4} strokeDasharray={n.state === "gap" ? "3 3" : n.state === "upcoming" ? "0.5 4" : n.state === "neutral" ? "0" : undefined} strokeLinecap="round" opacity={n.state === "neutral" ? 0.6 : 1} />
-        <PixelGlyph id={n.glyph} x={cx - size / 2} y={top + 2} size={size} ink={selected ? "var(--accent)" : n.state === "neutral" ? "var(--ink)" : color} accent={selected ? "var(--ink)" : "var(--accent)"} />
-        <text x={cx} y={top + size + 30} textAnchor="middle" fill={selected ? "var(--accent)" : "var(--ink)"} fontSize={big ? 15 : 12.5} fontWeight={700}>{clip(n.label, big ? 22 : 20)}</text>
+        <rect width={w} height={big ? CENTER_H : H} rx={10} fill="var(--bg)" />
+        {/* An app-style tile: solid with a white pictogram when it is in place, outlined when it is not. */}
+        <rect
+          x={cx - (size + 20) / 2}
+          y={top + size / 2 + 2 - (size + 20) / 2}
+          width={size + 20}
+          height={size + 20}
+          rx={big ? 22 : 16}
+          fill={inPlace ? (n.state === "shared" ? "color-mix(in srgb, var(--accent) 55%, var(--surface))" : "var(--accent)") : "var(--surface)"}
+          stroke={selected ? "var(--ink)" : inPlace ? "none" : n.state === "neutral" || n.info ? "var(--line)" : color}
+          strokeWidth={selected ? 2.5 : 1.6}
+          strokeDasharray={n.state === "gap" ? "4 4" : n.state === "upcoming" ? "1 5" : undefined}
+          strokeLinecap="round"
+        />
+        <PixelGlyph id={n.glyph} x={cx - size / 2} y={top + 2} size={size} ink={inPlace ? "#ffffff" : n.state === "neutral" || n.info ? "var(--ink)" : color} accent={inPlace ? "color-mix(in srgb, #ffffff 55%, var(--accent))" : n.state === "neutral" || n.info ? "var(--accent)" : color} />
+        <text x={cx} y={top + size + 30} textAnchor="middle" fill="var(--ink)" fontSize={big ? 15 : 12.5} fontWeight={700}>{clip(n.label, big ? 22 : 20)}</text>
         <text x={cx} y={top + size + (big ? 47 : 44)} textAnchor="middle" fill={n.state === "gap" || n.state === "upcoming" ? color : "var(--muted)"} fontSize={big ? 11 : 9.5}>{clip(n.caption, big ? 30 : 27)}</text>
       </g>
     );
@@ -401,8 +422,8 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
           {territories.map((t) => {
             const cp = rectPoint({ x: -CENTER_W / 2, y: -CENTER_H / 2, w: CENTER_W, h: CENTER_H }, t.x + t.w / 2, t.y + t.h / 2);
             const tp = rectPoint(t, 0, 0);
-            if (t.side === "s2") return null;
-            const corner = t.side.length === 2;
+            if (t.side === "s2" || t.side.length === 2) return null;
+            const corner = false;
             return <line key={`l-${t.id}`} x1={cp.x} y1={cp.y} x2={tp.x} y2={tp.y} stroke="var(--line)" strokeWidth={1.4} strokeDasharray={corner ? "3 7" : undefined} opacity={corner ? 0.7 : 1} />;
           })}
           {territories.map((t) => (
@@ -431,6 +452,11 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
           {renderNode(center, true)}
         </g>
       </svg>
+      <ul className="em-legend" aria-label="What the pictures mean">
+        <li><i className="l-on" /> covered</li>
+        <li><i className="l-gap" /> not covered</li>
+        <li><i className="l-soon" /> needed soon</li>
+      </ul>
       <div className="em-zoom">
         <button type="button" onClick={() => zoomBy(1.25)} aria-label="Zoom in">+</button>
         <button type="button" onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out">−</button>

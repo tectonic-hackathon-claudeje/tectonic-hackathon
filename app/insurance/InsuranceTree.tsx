@@ -1,30 +1,49 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Asset, EgoModel } from "@/lib/insurance/ego";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { forViewer } from "@/lib/insurance/access";
+import { alertsFor } from "@/lib/insurance/alerts";
+import type { AccessLevel, Asset, EgoModel } from "@/lib/insurance/ego";
 import { KBC } from "@/lib/insurance/kbc";
-import type { InsuranceModel, Status } from "@/lib/insurance/model";
+import type { InsuranceModel } from "@/lib/insurance/model";
+import { answer, opener, suggestions, type Action, type Nav, type Reply } from "./assistant";
+import type { Msg } from "./chatTypes";
+import { ChatPanel } from "./Chat";
 import { EgoMap } from "./EgoMap";
+import { OfferCard, Panel } from "./Panel";
 import { PixelIcon } from "./pixel";
 import { PosterMap } from "./PosterMap";
-import { answer, suggestions, type Action, type Answer } from "./assistant";
 import { assetScene, categoryScene, groupScene, personScene, stepLabel, type Step } from "./scenes";
 
 type Theme = "kbc" | "dark" | "plain";
 type View = "person" | "family";
 
 const THEME_LABEL: Record<Theme, string> = { kbc: "KBC", dark: "Dark", plain: "Plain" };
-const STATE_WORD: Record<Status, string> = { covered: "Covered", shared: "Covered via family", gap: "Not covered", upcoming: "Needed soon", na: "" };
+/** Whose screen this is. They are "Me" on the map; everyone else is by name. */
+const VIEWER = "P01";
+// What the viewer can do for each person. Joint account holders need no label: they are family.
+const ACCESS_WORD: Record<AccessLevel, string> = { self: "", joint: "", proxy: "Proxy", view: "View only", none: "No access" };
 
-export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { model: InsuranceModel; ego: EgoModel; initialTheme: Theme; initialPerson: string }) {
+export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson }: { model: InsuranceModel; ego: EgoModel; initialTheme: Theme; initialPerson: string }) {
+  // The world as this viewer may see it: one place decides what is hidden.
+  const ego = useMemo<EgoModel>(() => {
+    const me = egoRaw.assets[`person:${VIEWER}`];
+    const named = me ? { ...egoRaw, assets: { ...egoRaw.assets, [me.id]: { ...me, label: "Me", caption: "" } } } : egoRaw;
+    return forViewer(named, VIEWER);
+  }, [egoRaw]);
+  const levelOf = useCallback((id: string): AccessLevel => egoRaw.access[VIEWER]?.[id] ?? "none", [egoRaw]);
+
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [view, setView] = useState<View>("person");
   const [personId, setPersonId] = useState(initialPerson);
   const [trail, setTrail] = useState<Step[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [proposal, setProposal] = useState<string[]>([]);
-  const [showAll, setShowAll] = useState(false);
+  const [responses, setResponses] = useState<Record<string, Reply>>({});
+  const [requested, setRequested] = useState<string[]>([]);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const seq = useRef(0);
 
   // The theme belongs to the whole page, so it lives on <html>.
   useEffect(() => {
@@ -33,34 +52,40 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
       delete document.documentElement.dataset.theme;
     };
   }, [theme]);
-  useEffect(() => setShowAll(false), [trail, personId]);
 
   const nodesById = useMemo(() => new Map(model.nodes.map((n) => [n.id, n])), [model.nodes]);
   const person = model.people.find((p) => p.id === personId) ?? model.people[0];
+  const personLabel = personId === VIEWER ? "Me" : person.name;
+  const nameOf = useCallback((id: string) => (id === VIEWER ? "Me" : (model.people.find((p) => p.id === id)?.name ?? id)), [model.people]);
+  const ageOf = useCallback((id: string) => model.people.find((p) => p.id === id)?.age ?? 40, [model.people]);
+  const canActFor = useCallback((id: string) => ["self", "joint", "proxy"].includes(levelOf(id)), [levelOf]);
+
   const here = trail[trail.length - 1];
-  const scene = useMemo(() => {
+  const sceneBase = useMemo(() => {
     if (!here) return personScene(ego, personId);
     if (here.kind === "group") return groupScene(ego, personId, here.id);
-    if (here.kind === "category") return categoryScene(ego, personId, here.group, here.id, showAll);
+    if (here.kind === "category") return categoryScene(ego, personId, here.group, here.id);
     return assetScene(ego, here.id, personId);
-  }, [ego, here, personId, showAll]);
+  }, [ego, here, personId]);
+  // In the family tree, say where the viewer's access stops.
+  const scene = useMemo(
+    () => (sceneBase.tree ? { ...sceneBase, tree: sceneBase.tree.map((r) => ({ ...r, nodes: r.nodes.map((n) => ({ ...n, caption: ACCESS_WORD[levelOf(n.id.replace("person:", ""))] })) })) } : sceneBase),
+    [sceneBase, levelOf],
+  );
   // Groups and categories are not assets: the scene describes them.
   const lookup = useCallback((id: string): Asset | undefined => scene.details[id] ?? ego.assets[id], [scene, ego]);
   const shown = ((selectedId && lookup(selectedId)) || lookup(scene.center.id)) as Asset;
 
-  const switchPerson = useCallback((id: string) => {
-    setPersonId(id);
-    setTrail([]);
+  const navigate = useCallback((nav: Nav) => {
+    setView("person");
+    if (nav.person) setPersonId(nav.person);
+    setTrail(nav.steps);
     setSelectedId(null);
   }, []);
+  const switchPerson = useCallback((id: string) => navigate({ steps: [], person: id }), [navigate]);
   const open = useCallback(
     (id: string) => {
       if (id.startsWith("person:")) return switchPerson(id.slice(7));
-      if (id.startsWith("more:")) {
-        setShowAll(true);
-        setSelectedId(null);
-        return;
-      }
       let step: Step;
       if (id.startsWith("grp:")) step = { kind: "group", id: id.slice(4) };
       else if (id.startsWith("cat:")) {
@@ -109,32 +134,19 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
   }, [view, back, overview, open, shown, scene.center.id]);
 
   const toggleProposal = useCallback((id: string) => setProposal((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id])), []);
+  const addCovers = useCallback((covers: string[]) => setProposal((cur) => [...new Set([...cur, ...covers])]), []);
+  const respond = useCallback((gapId: string, reply: Reply) => setResponses((r) => ({ ...r, [gapId]: reply })), []);
+  const undoRespond = useCallback((gapId: string) => setResponses((r) => Object.fromEntries(Object.entries(r).filter(([k]) => k !== gapId))), []);
   const proposalNodes = proposal.map((id) => nodesById.get(id)).filter((n): n is NonNullable<typeof n> => Boolean(n));
   const monthly = proposalNodes.reduce((s, n) => s + n.product.monthly, 0);
 
-  // The assistant can take you somewhere (a subtree), switch person, or add to the proposal.
-  const navigate = useCallback((steps: Step[], person?: string) => {
-    setView("person");
-    if (person) setPersonId(person);
-    setTrail(steps);
-    setSelectedId(null);
-  }, []);
-  const addCovers = useCallback((covers: string[]) => setProposal((cur) => [...new Set([...cur, ...covers])]), []);
-  const runAction = useCallback(
-    (a: Action) => {
-      if (a.kind === "go") navigate(a.steps, a.person);
-      else if (a.kind === "person") switchPerson(a.person);
-      else addCovers(a.covers);
-    },
-    [navigate, switchPerson, addCovers],
-  );
-
-  const state = shown.kind === "policy" || shown.kind === "product" ? (shown.personState[personId] ?? (shown.kind === "product" ? "neutral" : shown.state)) : shown.state;
-  const connections = shown.related.filter((r) => lookup(r.id) && (shown.kind !== "person" || r.id.startsWith("person:") || /proxy|shared view/.test(r.relation)));
+  const state = shown.kind === "policy" || shown.kind === "product" || shown.kind === "property" ? (shown.personState[personId] ?? (shown.kind === "product" ? "neutral" : shown.state)) : shown.state;
+  const connections = shown.related.filter((r) => lookup(r.id) && (shown.kind !== "person" || r.id.startsWith("person:")));
   const relatedIds = connections.map((r) => r.id);
   // What would close a gap: the gap itself, or a catalogue product this person is missing.
   const viaAsset = shown.kind === "product" ? ego.assets[shown.via?.[personId] ?? ""] : undefined;
-  const gap = shown.kind === "gap" ? shown : viaAsset?.kind === "gap" ? viaAsset : undefined;
+  const propertyGap = shown.kind === "property" ? shown.related.map((r) => ego.assets[r.id]).find((a) => a?.kind === "gap" && a.personIds.includes(personId)) : undefined;
+  const gap = shown.kind === "gap" ? shown : viaAsset?.kind === "gap" ? viaAsset : propertyGap;
   const canOpen = shown.id !== scene.center.id && shown.kind !== "person";
   const canSwitch = shown.kind === "person" && shown.id !== `person:${personId}`;
 
@@ -148,27 +160,22 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
     return others.length > 0 ? [...groups, { label: "Others in the family", ids: others }] : groups;
   }, [ego, model.people, personId]);
 
-  // Alerts are messages, not a place on the map: a bell in the bar, and stories in the panel.
-  const alerts = useMemo(() => {
-    const rank = (a: Asset) => (a.state === "upcoming" ? 0 : a.priority === "high" ? 1 : a.priority === "medium" ? 2 : 3);
-    const all = Object.values(ego.assets).filter((a) => a.kind === "gap").sort((a, b) => rank(a) - rank(b) || a.label.localeCompare(b.label));
-    const mine = all.filter((a) => a.personIds.includes(personId));
-    // The rest of the family, but only what is pressing: Koen looks after his parents as well.
-    const others = all.filter((a) => !a.personIds.includes(personId) && rank(a) <= 1).slice(0, 6);
-    return { mine, others };
-  }, [ego, personId]);
+  // Alerts are messages, not a place on the map: a bell in the bar, and a short list in the panel.
+  // What you may not see, and what you have said you do not need, never shows up here.
+  const alerts = useMemo(() => alertsFor(ego, personId, levelOf, responses), [ego, personId, responses, levelOf]);
   const alertCount = alerts.mine.length + alerts.others.length;
+  const hasOthers = model.people.some((p) => p.id !== VIEWER && levelOf(p.id) !== "none");
 
-  const openAlert = useCallback((a: Asset, e?: React.MouseEvent<HTMLButtonElement>) => {
-    e?.currentTarget.closest("details")?.removeAttribute("open");
-    const category = KBC.products.find((p) => p.id === a.kbcId)?.category;
-    setView("person");
-    setPersonId(a.personIds[0]);
-    setTrail(category ? [{ kind: "category", group: "insurance", id: category }, { kind: "asset", id: a.id }] : [{ kind: "asset", id: a.id }]);
-    setSelectedId(null);
-  }, []);
+  const openAlert = useCallback(
+    (a: Asset, e?: React.MouseEvent<HTMLButtonElement>) => {
+      e?.currentTarget.closest("details")?.removeAttribute("open");
+      const category = KBC.products.find((p) => p.id === a.kbcId)?.category;
+      navigate({ person: a.personIds[0], steps: category ? [{ kind: "category", group: "insurance", id: category }, { kind: "asset", id: a.id }] : [{ kind: "asset", id: a.id }] });
+    },
+    [navigate],
+  );
 
-  // The story for what is selected: a category's own alerts, or everything for the person.
+  // What the panel shows as "worth a look": a category's own, or everything for the person.
   const stories = useMemo(() => {
     if (shown.kind === "category" && shown.id.startsWith("cat:insurance:")) {
       const cid = shown.id.split(":")[2];
@@ -182,58 +189,106 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
     return KBC.products.filter((p) => p.category === cid && ["covered", "shared"].includes(ego.assets[`kbc:${p.id}`]?.personState[personId] ?? "")).map((p) => p.short);
   }, [shown, ego, personId]);
 
+  // --- the chat. Sam only speaks when you do; answers can move the map, and you can undo that.
+  const id = () => `m${++seq.current}`;
+  const navLabel = (nav: Nav) => {
+    const pid = nav.person ?? personId;
+    return [nameOf(pid), ...nav.steps.map((s) => stepLabel(ego, s, pid))].join(" › ");
+  };
+  const goWithNote = (nav: Nav): Msg => {
+    const from: Nav = { steps: trail, person: personId };
+    navigate(nav);
+    return { id: id(), role: "system", text: `Took you to ${navLabel(nav)}.`, nav: { to: nav, from } };
+  };
+  const send = (text: string) => {
+    const t = text.trim();
+    if (!t) return;
+    const ans = answer(t, { ego, model, viewer: VIEWER, personId, shown, mine: alerts.mine, others: alerts.others });
+    const out: Msg[] = [{ id: id(), role: "user", text: t }];
+    if (ans.navigate) out.push(goWithNote(ans.navigate));
+    if (ans.respond) respond(ans.respond.gapId, ans.respond.reply);
+    out.push({ id: id(), role: "assistant", text: ans.text, actions: ans.actions, offerGapId: ans.offerGapId });
+    setMsgs((m) => [...m, ...out]);
+  };
+  const runAction = (a: Action) => {
+    if (a.kind === "go") {
+      const note = goWithNote(a.nav);
+      setMsgs((m) => [...m, note]);
+    } else if (a.kind === "add") addCovers(a.covers);
+    else if (a.kind === "call") {
+      setMsgs((m) => [...m, { id: id(), role: "assistant", text: `Done: I\u2019ve asked your advisor to call you (this is a demo, so nothing is sent). You can carry on here meanwhile.` }]);
+    } else if (a.kind === "respond") respond(a.gapId, a.reply);
+  };
+  const undoNav = (msgId: string) => {
+    const m = msgs.find((x) => x.id === msgId);
+    if (!m?.nav) return;
+    navigate(m.nav.from);
+    setMsgs((all) => all.map((x) => (x.id === msgId && x.nav ? { ...x, nav: { ...x.nav, undone: true } } : x)));
+  };
+  const worried = alerts.others[0] ? nameOf(alerts.others[0].personIds[0]) : undefined;
+  const chips = suggestions(shown, personId === VIEWER, person.name, worried);
+  const viewerName = model.people.find((p) => p.id === VIEWER)?.name ?? "there";
+
+  // The poster map shows only the people the viewer may see.
+  const posterModel = useMemo<InsuranceModel>(() => {
+    const visible = (id: string) => levelOf(id) !== "none";
+    return { ...model, people: model.people.filter((p) => visible(p.id)), nodes: model.nodes.map((n) => ({ ...n, cells: n.cells.filter((c) => visible(c.personId)) })) };
+  }, [model, levelOf]);
+
   return (
     <div className="cw">
       <header className="cw-bar">
         <Link href="/" className="cw-mark" aria-label="Product explorer home">
-          KBC<span> · Family cover</span>
+          KBC<span> · Insurance</span>
         </Link>
-        <span className="cw-tag">mock data</span>
         <span className="cw-sep" aria-hidden="true" />
         <details className="cw-menu">
           <summary>
-            <PixelIcon id={ego.assets[`person:${person.id}`]?.glyph ?? "adult"} size={16} /> {person.name}
+            <PixelIcon id={ego.assets[`person:${person.id}`]?.glyph ?? "adult"} size={16} /> {personLabel}
             <span aria-hidden="true"> ▾</span>
           </summary>
           <ul>
             <li className="cw-menu-group">
               <span>Looking at</span>
               <button type="button" aria-current="true" onClick={(e) => e.currentTarget.closest("details")?.removeAttribute("open")}>
-                <PixelIcon id={ego.assets[`person:${person.id}`]?.glyph ?? "adult"} size={16} /> {person.name}
+                <PixelIcon id={ego.assets[`person:${person.id}`]?.glyph ?? "adult"} size={16} /> {personLabel}
               </button>
             </li>
             {menuGroups.map((g) => (
               <li key={g.label} className="cw-menu-group">
                 <span>{g.label}</span>
-                {g.ids.map((id) => (
+                {g.ids.map((pid) => (
                   <button
-                    key={id}
+                    key={pid}
                     type="button"
                     onClick={(e) => {
-                      switchPerson(id);
+                      switchPerson(pid);
                       e.currentTarget.closest("details")?.removeAttribute("open");
                     }}
                   >
-                    <PixelIcon id={ego.assets[`person:${id}`]?.glyph ?? "adult"} size={16} /> {model.people.find((p) => p.id === id)?.name}
+                    <PixelIcon id={ego.assets[`person:${pid}`]?.glyph ?? "adult"} size={16} /> {nameOf(pid)}
+                    {ACCESS_WORD[levelOf(pid)] ? <small className="cw-access"> · {ACCESS_WORD[levelOf(pid)].toLowerCase()}</small> : null}
                   </button>
                 ))}
               </li>
             ))}
           </ul>
         </details>
-        <div className="cw-seg" role="group" aria-label="View">
-          <button type="button" aria-pressed={view === "person"} onClick={() => setView("person")}>Person</button>
-          <button type="button" aria-pressed={view === "family"} onClick={() => setView("family")}>Family map</button>
-        </div>
+        {hasOthers ? (
+          <div className="cw-seg" role="group" aria-label="View">
+            <button type="button" aria-pressed={view === "person"} onClick={() => setView("person")}>Person</button>
+            <button type="button" aria-pressed={view === "family"} onClick={() => setView("family")}>Family map</button>
+          </div>
+        ) : null}
         <div className="cw-right">
           <details className="cw-menu cw-alerts">
-            <summary aria-label={`${alertCount} alerts`}>
+            <summary aria-label={`${alerts.mine.length} things to look at, ${alerts.others.length} for family`}>
               <PixelIcon id="alert" size={16} />
-              {alertCount > 0 ? <span className="cw-badge">{alertCount}</span> : null}
+              {alerts.mine.length > 0 ? <span className="cw-badge">{alerts.mine.length}</span> : null}
             </summary>
             <div>
-              {alertCount === 0 ? <p>Nothing needs attention.</p> : null}
-              {[{ title: `For ${person.name}`, items: alerts.mine }, { title: "Elsewhere in the family", items: alerts.others }]
+              {alertCount === 0 ? <p>Nothing to look at right now.</p> : null}
+              {[{ title: `For ${personLabel === "Me" ? "me" : person.name}`, items: alerts.mine }, { title: "Elsewhere in the family", items: alerts.others }]
                 .filter((g) => g.items.length > 0)
                 .map((g) => (
                   <section key={g.title}>
@@ -246,7 +301,7 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
                             <span>
                               <strong>
                                 <i className={`cw-dot cw-dot-${a.state}`} aria-hidden="true" />
-                                {a.personIds[0] !== personId ? `${model.people.find((p) => p.id === a.personIds[0])?.name} · ` : ""}
+                                {a.personIds[0] !== personId ? `${nameOf(a.personIds[0])} · ` : ""}
                                 {a.story?.headline}
                               </strong>
                               <small>{a.story?.line}</small>
@@ -259,16 +314,11 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
                 ))}
             </div>
           </details>
-          <div className="cw-seg" role="group" aria-label="Theme">
-            {(["kbc", "dark", "plain"] as Theme[]).map((t) => (
-              <button key={t} type="button" aria-pressed={theme === t} onClick={() => setTheme(t)}>{THEME_LABEL[t]}</button>
-            ))}
-          </div>
           <details className="cw-menu cw-proposal">
-            <summary className="cw-cta">{proposalNodes.length > 0 ? `€${monthly}/mo · ${proposalNodes.length}` : "Proposal"}</summary>
+            <summary className={proposalNodes.length > 0 ? "cw-cta" : ""}>{proposalNodes.length > 0 ? `€${monthly}/mo · ${proposalNodes.length}` : "Shortlist"}</summary>
             <div>
               {proposalNodes.length === 0 ? (
-                <p>Add a product from a story to start an offer.</p>
+                <p>Add a product from a missing cover to start an offer.</p>
               ) : (
                 <>
                   <ul>
@@ -280,9 +330,21 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
                       </li>
                     ))}
                   </ul>
-                  <p><strong>From €{monthly} / month</strong></p>
+                  <p><strong>From €{monthly} / month</strong> · estimates</p>
                 </>
               )}
+            </div>
+          </details>
+          <details className="cw-menu cw-settings">
+            <summary aria-label="Settings">⚙</summary>
+            <div>
+              <p className="cw-set-label">Look</p>
+              <div className="cw-seg" role="group" aria-label="Theme">
+                {(["kbc", "dark", "plain"] as Theme[]).map((t) => (
+                  <button key={t} type="button" aria-pressed={theme === t} onClick={() => setTheme(t)}>{THEME_LABEL[t]}</button>
+                ))}
+              </div>
+              <p className="cw-set-note">Demo: all names, prices and cover are mock data, not KBC offers. Prices are estimates.</p>
             </div>
           </details>
         </div>
@@ -293,7 +355,9 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
           <div className="cw-crumbs">
             <button type="button" className="cw-back" onClick={back} disabled={trail.length === 0} aria-label="Back">←</button>
             <nav aria-label="Where you are">
-              <button type="button" onClick={overview} aria-current={trail.length === 0 ? "page" : undefined} disabled={trail.length === 0}>{person.name}</button>
+              <span className="cw-root">Insurance</span>
+              <span aria-hidden="true"> / </span>
+              <button type="button" onClick={overview} aria-current={trail.length === 0 ? "page" : undefined} disabled={trail.length === 0}>{personLabel}</button>
               {trail.map((s, i) => (
                 <span key={`${JSON.stringify(s)}-${i}`}>
                   <span aria-hidden="true"> / </span>
@@ -306,298 +370,58 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
             <section className="cw-canvas" aria-label={scene.title}>
               <EgoMap scene={scene} selectedId={selectedId} relatedIds={relatedIds} onSelect={setSelectedId} onOpen={open} />
             </section>
-            <Panel
-              asset={shown}
-              state={state}
-              personName={person.name}
-              stories={stories}
-              inPlace={inPlace}
-              gap={gap}
-              viaPolicy={shown.kind === "product" ? ego.assets[shown.via?.[personId] ?? ""] : undefined}
-              people={model.people}
-              personId={personId}
-              lookup={lookup}
-              onJump={setSelectedId}
-              canOpen={canOpen}
-              canSwitch={canSwitch}
-              onOpen={() => open(shown.id)}
-              onOpenStory={(a) => openAlert(a)}
-              proposal={proposal}
-              onToggleProposal={toggleProposal}
-              footer={<Assistant shown={shown} name={person.name} ask={(q) => answer(q, { ego, model, personId, shown, mine: alerts.mine, proposal })} onAction={runAction} />}
-            />
+            <aside className="cw-panel" aria-label={`About ${shown.label}`}>
+              <Panel
+                asset={shown}
+                state={state}
+                title={shown.label}
+                isMe={personId === VIEWER}
+                personName={person.name}
+                level={levelOf(personId)}
+                age={ageOf(personId)}
+                stories={stories}
+                inPlace={inPlace}
+                gap={gap}
+                viaPolicy={shown.kind === "product" ? ego.assets[shown.via?.[personId] ?? ""] : undefined}
+                personId={personId}
+                lookup={lookup}
+                onJump={setSelectedId}
+                canOpen={canOpen}
+                canSwitch={canSwitch}
+                onOpen={() => open(shown.id)}
+                onOpenStory={(a) => openAlert(a)}
+                proposal={proposal}
+                onToggleProposal={toggleProposal}
+                responses={responses}
+                onRespond={respond}
+                onUndoRespond={undoRespond}
+                requested={requested.includes(personId)}
+                onRequestAccess={() => setRequested((r) => [...r, personId])}
+              />
+              <ChatPanel
+                msgs={msgs}
+                chips={chips}
+                opener={opener(personId === VIEWER, person.name, viewerName)}
+                onSend={send}
+                onAction={runAction}
+                onUndo={undoNav}
+                renderOffer={(gapId) => {
+                  const g = ego.assets[gapId];
+                  if (!g) return null;
+                  const who = g.personIds[0];
+                  return <OfferCard gap={g} age={ageOf(who)} name={nameOf(who)} canAct={canActFor(who)} proposal={proposal} response={responses[g.id]} onAdd={toggleProposal} onRespond={respond} onUndo={undoRespond} />;
+                }}
+              />
+            </aside>
           </div>
         </>
       ) : (
         <div className="cw-body cw-body-wide">
           <section className="cw-canvas" aria-label="Family cover map">
-            <PosterMap model={model} scope="all" proposal={proposal} onToggleProposal={toggleProposal} focusRequest={null} />
+            <PosterMap model={posterModel} scope="all" proposal={proposal} onToggleProposal={toggleProposal} focusRequest={null} />
           </section>
         </div>
       )}
     </div>
-  );
-}
-
-const priceOf = (a: Asset) => a.product?.monthly;
-
-type Line = { text: string; links?: { id: string; label: string }[] };
-const and = (items: string[]) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}` : (items[0] ?? ""));
-
-/** What a normal person would want to know, in sentences: no relations, no tables. */
-function goodToKnow(asset: Asset, lookup: (id: string) => Asset | undefined, people: InsuranceModel["people"], gap?: Asset): Line[] {
-  const fact = (k: string) => asset.facts.find((f) => f.k === k)?.v;
-  const rel = (...names: string[]) => asset.related.filter((r) => names.includes(r.relation) && lookup(r.id)).map((r) => ({ id: r.id, label: lookup(r.id)?.label ?? "" }));
-  const lines: Line[] = [];
-  const add = (text: string, links?: { id: string; label: string }[]) => {
-    if (links && links.length === 0) return;
-    lines.push({ text, links });
-  };
-  const holders = and(asset.personIds.map((id) => people.find((p) => p.id === id)?.name).filter((n): n is string => Boolean(n)));
-  switch (asset.kind) {
-    case "policy": {
-      add(`${fact("Insurer")}, ${fact("Premium")}.`);
-      if (fact("Insured")) add(`Covers ${and((fact("Insured") ?? "").split(", "))}.`);
-      if (fact("Covers")) add(`For ${fact("Covers")}.`);
-      if (fact("Renews")) add(`Renews ${fact("Renews")}.`);
-      add("Paid from", rel("paid from"));
-      add("Protects the", rel("protects"));
-      if (fact("Note")) add(`Tip: ${fact("Note")}.`);
-      break;
-    }
-    case "gap": {
-      const covers = gap?.kbcId ? KBC.products.find((p) => p.id === gap.kbcId)?.covers : undefined;
-      if (covers) add(`Covers ${covers.charAt(0).toLowerCase()}${covers.slice(1)}.`);
-      if (asset.product) add(asset.product.pitch);
-      add("Goes with", rel("builds on"));
-      for (const f of asset.facts.filter((x) => x.k === "Worth a look")) add(`${f.v}.`);
-      break;
-    }
-    case "account":
-      add(`Balance ${fact("Balance")}.`);
-      if (holders) add(`${asset.personIds.length > 1 ? "Shared by" : "Belongs to"} ${holders}.`);
-      add("Pays for", [...rel("pays premium"), ...rel("pays")]);
-      add("Has the card", rel("card"));
-      add("Saving for", rel("saving for"));
-      break;
-    case "card":
-      add(`${fact("Status")}, expires ${fact("Expires")}.`);
-      add("Linked to", rel("draws on"));
-      break;
-    case "loan":
-      add(`${fact("Still owed")} still owed, until ${fact("Ends")}.`);
-      add("Paid from", rel("paid from"));
-      add("Protected by", rel("protected by"));
-      break;
-    case "goal":
-      add(asset.detail);
-      add("Kept in", rel("kept in"));
-      break;
-    case "person":
-      add(`${asset.detail}`);
-      if (fact("Lives in")) add(`Lives in ${fact("Lives in")}.`);
-      if (fact("Prefers")) add(`Prefers the ${fact("Prefers")}.`);
-      add("Looks after", rel("proxy mandate", "proxy view only", "shared view"));
-      break;
-    case "product":
-      add(`Covers ${(fact("Covers") ?? "").toLowerCase()}.`);
-      break;
-    default:
-      break;
-  }
-  return lines;
-}
-
-function Panel({
-  asset,
-  state,
-  personName,
-  stories,
-  inPlace,
-  gap,
-  viaPolicy,
-  people,
-  personId,
-  lookup,
-  onJump,
-  canOpen,
-  canSwitch,
-  onOpen,
-  onOpenStory,
-  proposal,
-  onToggleProposal,
-  footer,
-}: {
-  asset: Asset;
-  state: Asset["state"];
-  personName: string;
-  stories: Asset[];
-  inPlace: string[];
-  gap?: Asset;
-  viaPolicy?: Asset;
-  people: InsuranceModel["people"];
-  personId: string;
-  lookup: (id: string) => Asset | undefined;
-  onJump: (id: string) => void;
-  canOpen: boolean;
-  canSwitch: boolean;
-  onOpen: () => void;
-  onOpenStory: (a: Asset) => void;
-  proposal: string[];
-  onToggleProposal: (id: string) => void;
-  footer: React.ReactNode;
-}) {
-  const isPerson = asset.kind === "person";
-  const tagline =
-    gap ? gap.story?.headline
-    : asset.kind === "policy" || asset.kind === "product" ? (state === "neutral" ? "Not needed right now" : STATE_WORD[state as Status])
-    : asset.kind === "category" || asset.kind === "group" ? asset.caption
-    : isPerson ? asset.detail.replace(/^[^,]+, /, "").replace(/\.$/, "")
-    : asset.caption;
-  const renews = asset.facts.find((f) => f.k === "Renews")?.v;
-  const good = goodToKnow(asset, lookup, people, gap);
-  const first = stories.slice(0, 3);
-  const rest = stories.slice(3);
-  const card = (a: Asset) => (
-    <li key={a.id} className={`cw-story cw-story-${a.state}`}>
-      <button type="button" className="cw-story-main" onClick={() => onOpenStory(a)}>
-        <PixelIcon id={a.glyph} size={30} />
-        <span>
-          <strong>{a.story?.headline}</strong>
-          <small>{a.story?.line}</small>
-        </span>
-      </button>
-      {a.product && a.coverId ? (
-        <button type="button" className="cw-chip" aria-pressed={proposal.includes(a.coverId)} onClick={() => onToggleProposal(a.coverId as string)}>
-          {proposal.includes(a.coverId) ? "✓ Added" : `+ €${priceOf(a)}/mo`}
-        </button>
-      ) : null}
-    </li>
-  );
-
-  return (
-    <aside className="cw-panel" aria-label={`About ${asset.label}`}>
-      <div className="cw-scroll">
-      <header className="cw-ph">
-        <PixelIcon id={asset.glyph} size={40} />
-        <div>
-          <h2>{asset.label}</h2>
-          {tagline ? <p className={`cw-tagline cw-tagline-${state}`}>{tagline}</p> : null}
-        </div>
-        {canOpen ? <button type="button" className="cw-open" onClick={onOpen}>Open</button> : null}
-        {canSwitch ? <button type="button" className="cw-open" onClick={onOpen}>Switch</button> : null}
-      </header>
-
-      {stories.length > 0 ? (
-        <ul className="cw-stories" aria-label={`Things to look at for ${personName}`}>
-          {first.map(card)}
-          {rest.length > 0 ? (
-            <li>
-              <details className="cw-rest">
-                <summary>{rest.length} more</summary>
-                <ul className="cw-stories">{rest.map(card)}</ul>
-              </details>
-            </li>
-          ) : null}
-        </ul>
-      ) : isPerson && asset.id === `person:${personId}` ? (
-        <p className="cw-quiet">All good: nothing to look at.</p>
-      ) : null}
-
-      {inPlace.length > 0 ? <p className="cw-inplace"><span>In place</span> {inPlace.join(" · ")}</p> : null}
-
-      {gap && gap.story ? (
-        <div className="cw-gapcard">
-          <p className="cw-line">{gap.story.line}</p>
-          {gap.product ? (
-            <div className="cw-product">
-              <div>
-                <strong>{gap.product.name}</strong>
-                <small>from €{gap.product.monthly} / month</small>
-              </div>
-              {gap.coverId ? (
-                <button type="button" className="cw-add" aria-pressed={proposal.includes(gap.coverId)} onClick={() => onToggleProposal(gap.coverId as string)}>
-                  {proposal.includes(gap.coverId) ? "✓ Added" : "Add"}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {(asset.kind === "policy" || viaPolicy?.kind === "policy") && (state === "covered" || state === "shared") ? (
-        <p className="cw-line">
-          {(viaPolicy ?? asset).caption}
-          {renews ? ` · renews ${renews}` : ""}
-        </p>
-      ) : null}
-      {asset.kind === "product" && !gap && state === "neutral" ? <p className="cw-line">{asset.facts.find((f) => f.k === "Covers")?.v}</p> : null}
-      {["account", "card", "loan", "goal"].includes(asset.kind) ? <p className="cw-line">{asset.caption}</p> : null}
-
-      {good.length > 0 || asset.links.length > 0 ? (
-        <details className="cw-more">
-          <summary>Good to know</summary>
-          <ul className="cw-good">
-            {good.map((l, i) => (
-              <li key={i}>
-                {l.text}
-                {l.links?.map((k, j) => (
-                  <span key={k.id}>
-                    {j > 0 ? " and " : " "}
-                    <button type="button" onClick={() => onJump(k.id)}>{k.label}</button>
-                  </span>
-                ))}
-                {l.links ? "." : ""}
-              </li>
-            ))}
-            {asset.links.map((l) => (
-              <li key={l.href}>{l.external ? <a href={l.href} target="_blank" rel="noopener noreferrer">{l.label} ↗</a> : <Link href={l.href}>{l.label}</Link>}</li>
-            ))}
-          </ul>
-        </details>
-      ) : null}
-      </div>
-      {footer}
-    </aside>
-  );
-}
-
-/** A small helper at the foot of the panel, everywhere: ask about a risk and it points to the right place. */
-function Assistant({ shown, name, ask, onAction }: { shown: Asset; name: string; ask: (q: string) => Answer; onAction: (a: Action) => void }) {
-  const [q, setQ] = useState("");
-  const [thread, setThread] = useState<{ q: string; a: Answer } | null>(null);
-  // A new selection is a new conversation.
-  useEffect(() => setThread(null), [shown.id]);
-  const send = (text: string) => {
-    if (!text.trim()) return;
-    setThread({ q: text, a: ask(text) });
-    setQ("");
-  };
-  return (
-    <section className="cw-assist" aria-label="Assistant">
-      {thread ? (
-        <div className="cw-answer" role="status">
-          <p className="cw-asked">{thread.q}</p>
-          <p>{thread.a.text}</p>
-          {thread.a.actions.length > 0 ? (
-            <div className="cw-actions">
-              {thread.a.actions.map((a) => (
-                <button key={a.label} type="button" onClick={() => onAction(a)}>{a.label} →</button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <div className="cw-suggest">
-          {suggestions(shown, name).map((s) => (
-            <button key={s} type="button" onClick={() => send(s)}>{s}</button>
-          ))}
-        </div>
-      )}
-      <form onSubmit={(e) => { e.preventDefault(); send(q); }}>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Ask about ${name}'s cover…`} aria-label="Ask the assistant" />
-        <button type="submit" aria-label="Send">↑</button>
-      </form>
-    </section>
   );
 }

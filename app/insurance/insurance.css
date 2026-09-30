@@ -243,3 +243,76 @@ html[data-theme="dark"] .skip-link { color: var(--accent-ink); }
 .cw-good button { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .cw-good a { color: var(--accent); }
 .cw-more > summary { text-transform: none; letter-spacing: 0; font: 600 0.92rem system-ui, sans-serif; }
+
+/* Personal panel: a short info area on top, a real chat beneath. Sam never speaks first. */
+.cw-panel { display: flex !important; flex-direction: column; padding: 0 !important; overflow: hidden !important; }
+.cw-info { flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 1.1rem 1.25rem 1rem; }
+.cw-label { margin: 1.1rem 0 0.35rem !important; font: 600 0.68rem ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.cw-looks { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.15rem; }
+.cw-look { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.5rem 0.4rem; border: 0; border-radius: 10px; background: none; color: var(--ink); text-align: left; cursor: pointer; font: inherit; font-size: 1rem; }
+.cw-look:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.cw-look svg { flex: none; }
+.cw-banner { margin: 0 0 0.8rem !important; padding: 0.55rem 0.75rem; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 0.88rem; line-height: 1.4; color: var(--muted); font-family: system-ui, sans-serif; }
+.cw-banner-none { border-color: var(--gap); }
+.cw-banner button { margin-left: 0.4rem; border: 0; background: none; color: var(--accent); cursor: pointer; font: inherit; text-decoration: underline; }
+.cw-docs { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.15rem; }
+.cw-docs a { display: flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0.3rem; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 0.95rem; }
+.cw-docs a:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.cw-docs small { margin-left: auto; color: var(--muted); font: 600 0.65rem ui-monospace, Menlo, monospace; }
+
+/* An offer you can turn down: equal choices, the product one tap away */
+.cw-offer2 { margin-top: 1rem; padding: 0.85rem 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); font-family: system-ui, sans-serif; }
+.cw-offer2 p { margin: 0 0 0.6rem; }
+.cw-offer-line { font-size: 1rem; line-height: 1.45; }
+.cw-offer-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.cw-offer-actions button, .cw-offer2-done button { padding: 0.4rem 0.75rem; border-radius: 999px; border: 1.5px solid var(--line); background: transparent; color: var(--ink); font: 600 0.8rem system-ui, sans-serif; cursor: pointer; }
+.cw-offer-actions button:hover { border-color: var(--accent); color: var(--accent); }
+.cw-offer-actions button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.cw-offer-detail { margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); font-size: 0.92rem; line-height: 1.4; }
+.cw-offer-detail p { margin: 0.25rem 0 0; color: var(--muted); }
+.cw-offer2-done p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+/* The chat with Sam */
+.cw-chat { flex: 0 0 auto; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.7rem 1.25rem 1rem; border-top: 1px solid var(--line); background: var(--surface); font-family: system-ui, sans-serif; max-height: 52%; }
+.cw-chat-open { flex: 1 1 52%; min-height: 0; }
+.cw-chat-head { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.cw-chat-head small { color: var(--muted); font-size: 0.75rem; }
+.cw-sam { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--accent); color: #fff; }
+.cw-opener { margin: 0; color: var(--muted); font-size: 0.95rem; line-height: 1.4; }
+.cw-msgs { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; align-content: start; gap: 0.5rem; padding-right: 0.2rem; }
+.cw-msg { max-width: 92%; padding: 0.55rem 0.8rem; border-radius: 14px; font-size: 0.95rem; line-height: 1.4; }
+.cw-msg p { margin: 0; }
+.cw-msg-user { justify-self: end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
+.cw-msg-assistant { justify-self: start; background: color-mix(in srgb, var(--accent) 10%, var(--bg)); border-bottom-left-radius: 4px; }
+.cw-msg-assistant .cw-offer2 { background: var(--surface); }
+.cw-sys { margin: 0; text-align: center; font-size: 0.78rem; color: var(--muted); }
+.cw-sys button { border: 0; background: none; color: var(--accent); cursor: pointer; font: inherit; text-decoration: underline; }
+.cw-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+.cw-actions button { padding: 0.35rem 0.7rem; border-radius: 999px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); font: 600 0.8rem system-ui, sans-serif; cursor: pointer; }
+.cw-actions button:hover { background: var(--accent); color: var(--accent-ink); }
+.cw-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.cw-chips button { padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 0.85rem; cursor: pointer; }
+.cw-chips button:hover { border-color: var(--accent); color: var(--accent); }
+.cw-chat form { display: flex; gap: 0.4rem; }
+.cw-chat input { flex: 1; min-width: 0; padding: 0.6rem 0.9rem; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 0.92rem; }
+.cw-chat input:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+.cw-chat form button { width: 2.4rem; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); font-size: 1rem; cursor: pointer; }
+.cw-access { color: var(--muted); font-size: 0.72rem; }
+@media (max-width: 960px) { .cw-chat, .cw-chat-open { max-height: none; } }
+
+.cw-root { color: var(--muted); font-weight: 500; }
+
+/* Calmer chrome, a person on call, and a legend */
+.cw-settings > div { left: auto; right: 0; min-width: 240px; padding: 0.8rem; }
+.cw-set-label { margin: 0 0 0.4rem; font: 600 0.68rem ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.cw-set-note { margin: 0.7rem 0 0; font: 0.8rem system-ui, sans-serif; color: var(--muted); line-height: 1.4; }
+.cw-badge { background: var(--accent) !important; color: var(--accent-ink) !important; }
+.cw-person { margin-left: auto; border: 0; background: none; color: var(--accent); font: 600 0.8rem system-ui, sans-serif; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.cw-actions a { padding: 0.35rem 0.7rem; border-radius: 999px; border: 1.5px solid var(--accent); color: var(--accent); font: 600 0.8rem system-ui, sans-serif; text-decoration: none; }
+.cw-actions a:hover { background: var(--accent); color: var(--accent-ink); }
+.em-legend { position: absolute; left: 50%; bottom: 0.6rem; transform: translateX(-50%); display: flex; gap: 1.1rem; margin: 0; padding: 0.35rem 0.8rem; list-style: none; border-radius: 999px; background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--line); font: 0.78rem system-ui, sans-serif; color: var(--muted); pointer-events: none; }
+.em-legend li { display: flex; align-items: center; gap: 0.4rem; }
+.em-legend i { width: 0.9rem; height: 0.9rem; border-radius: 4px; display: inline-block; }
+.em-legend .l-on { background: var(--accent); }
+.em-legend .l-gap { border: 1.6px dashed var(--gap); }
+.em-legend .l-soon { border: 1.6px dotted var(--soon); }

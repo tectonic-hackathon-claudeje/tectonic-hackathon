@@ -5,7 +5,7 @@ import { InsuranceTree } from "./InsuranceTree";
 import "./insurance.css";
 
 export const metadata: Metadata = {
-  title: "Family cover map",
+  title: "Insurance",
   description: "What the Peeters family has, who is covered through whom, and what is still missing.",
 };
 
