@@ -7,7 +7,7 @@ import { alertsFor } from "@/lib/insurance/alerts";
 import type { AccessLevel, Asset, EgoModel } from "@/lib/insurance/ego";
 import { KBC } from "@/lib/insurance/kbc";
 import type { InsuranceModel } from "@/lib/insurance/model";
-import { answer, opener, suggestions, type Action, type Nav, type Reply } from "./assistant";
+import { answer, opener, speakerFor, suggestions, type Action, type Nav, type Reply } from "./assistant";
 import type { Msg } from "./chatTypes";
 import { ChatPanel } from "./Chat";
 import { EgoMap } from "./EgoMap";
@@ -147,6 +147,8 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
   const viaAsset = shown.kind === "product" ? ego.assets[shown.via?.[personId] ?? ""] : undefined;
   const propertyGap = shown.kind === "property" ? shown.related.map((r) => ego.assets[r.id]).find((a) => a?.kind === "gap" && a.personIds.includes(personId)) : undefined;
   const gap = shown.kind === "gap" ? shown : viaAsset?.kind === "gap" ? viaAsset : propertyGap;
+  const viaPolicyAsset = shown.kind === "product" ? ego.assets[shown.via?.[personId] ?? ""] : undefined;
+  const speaker = speakerFor(shown, gap, viaPolicyAsset, ego);
   const canOpen = shown.id !== scene.center.id && shown.kind !== "person";
   const canSwitch = shown.kind === "person" && shown.id !== `person:${personId}`;
 
@@ -203,11 +205,11 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
   const send = (text: string) => {
     const t = text.trim();
     if (!t) return;
-    const ans = answer(t, { ego, model, viewer: VIEWER, personId, shown, mine: alerts.mine, others: alerts.others });
+    const ans = answer(t, { ego, model, viewer: VIEWER, personId, shown, mine: alerts.mine, others: alerts.others, speaker });
     const out: Msg[] = [{ id: id(), role: "user", text: t }];
     if (ans.navigate) out.push(goWithNote(ans.navigate));
     if (ans.respond) respond(ans.respond.gapId, ans.respond.reply);
-    out.push({ id: id(), role: "assistant", text: ans.text, actions: ans.actions, offerGapId: ans.offerGapId });
+    out.push({ id: id(), role: "assistant", text: ans.text, actions: ans.actions, offerGapId: ans.offerGapId, from: { label: speaker.label, glyph: speaker.glyph } });
     setMsgs((m) => [...m, ...out]);
   };
   const runAction = (a: Action) => {
@@ -216,7 +218,7 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
       setMsgs((m) => [...m, note]);
     } else if (a.kind === "add") addCovers(a.covers);
     else if (a.kind === "call") {
-      setMsgs((m) => [...m, { id: id(), role: "assistant", text: `Done: I\u2019ve asked your advisor to call you (this is a demo, so nothing is sent). You can carry on here meanwhile.` }]);
+      setMsgs((m) => [...m, { id: id(), role: "assistant", text: `Done: I\u2019ve asked your advisor to call you (this is a demo, so nothing is sent). You can carry on here meanwhile.`, from: { label: speaker.label, glyph: speaker.glyph } }]);
     } else if (a.kind === "respond") respond(a.gapId, a.reply);
   };
   const undoNav = (msgId: string) => {
@@ -226,7 +228,7 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
     setMsgs((all) => all.map((x) => (x.id === msgId && x.nav ? { ...x, nav: { ...x.nav, undone: true } } : x)));
   };
   const worried = alerts.others[0] ? nameOf(alerts.others[0].personIds[0]) : undefined;
-  const chips = suggestions(shown, personId === VIEWER, person.name, worried);
+  const chips = suggestions(speaker, shown, personId === VIEWER, person.name, worried);
   const viewerName = model.people.find((p) => p.id === VIEWER)?.name ?? "there";
 
   // The poster map shows only the people the viewer may see.
@@ -399,9 +401,10 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
                 onRequestAccess={() => setRequested((r) => [...r, personId])}
               />
               <ChatPanel
+                speaker={speaker}
                 msgs={msgs}
                 chips={chips}
-                opener={opener(personId === VIEWER, person.name, viewerName)}
+                opener={opener(speaker, personId === VIEWER, person.name, viewerName)}
                 onSend={send}
                 onAction={runAction}
                 onUndo={undoNav}

@@ -11,6 +11,7 @@ import { PixelIcon } from "./pixel";
  * where it went and lets you undo it.
  */
 export function ChatPanel({
+  speaker,
   msgs,
   chips,
   opener,
@@ -19,6 +20,7 @@ export function ChatPanel({
   onUndo,
   renderOffer,
 }: {
+  speaker: { label: string; sub?: string; glyph: string };
   msgs: Msg[];
   chips: string[];
   opener: string;
@@ -37,17 +39,18 @@ export function ChatPanel({
   const started = msgs.length > 0;
 
   return (
-    <section className={`cw-chat${started ? " cw-chat-open" : ""}`} aria-label="Chat with Sam">
+    <section className={`cw-chat${started ? " cw-chat-open" : ""}`} aria-label={`Chat with ${speaker.label}`}>
       <header className="cw-chat-head">
-        <span className="cw-sam"><PixelIcon id="care" size={16} /></span>
-        <strong>Sam</strong>
-        <small>virtual helper</small>
+        <span className="cw-sam"><PixelIcon id={speaker.glyph} size={16} ink="#ffffff" accent="#ffffff" /></span>
+        <strong>{speaker.label}</strong>
+        {speaker.sub ? <small>{speaker.sub}</small> : null}
+        <small className="cw-ai" title="This voice is made up by the app to help you. It is not a statement from the insurer.">AI voice</small>
         <button type="button" className="cw-person" onClick={() => onAction({ kind: "call", label: "Talk to a person" })}>Talk to a person</button>
       </header>
 
       {started ? (
         <div ref={list} className="cw-msgs" role="log" aria-live="polite" aria-relevant="additions">
-          {msgs.map((m) =>
+          {msgs.map((m, i) =>
             m.role === "system" ? (
               <p key={m.id} className="cw-sys">
                 {m.text}{" "}
@@ -55,6 +58,7 @@ export function ChatPanel({
               </p>
             ) : (
               <div key={m.id} className={`cw-msg cw-msg-${m.role}`}>
+                {m.role === "assistant" && m.from && m.from.label !== msgs.slice(0, i).reverse().find((x) => x.role === "assistant")?.from?.label ? <span className="cw-from">{m.from.label}</span> : null}
                 <p>{m.text}</p>
                 {m.offerGapId ? renderOffer(m.offerGapId) : null}
                 {m.actions && m.actions.length > 0 ? (
@@ -92,7 +96,7 @@ export function ChatPanel({
           setQ("");
         }}
       >
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tell me what’s on your mind…" aria-label="Message Sam" autoComplete="off" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tell me what’s on your mind…" aria-label={`Message ${speaker.label}`} autoComplete="off" />
         <button type="submit" aria-label="Send">↑</button>
       </form>
     </section>

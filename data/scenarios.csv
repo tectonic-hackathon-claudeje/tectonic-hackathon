@@ -1,0 +1,35 @@
+cover,pays,scenario,outcome
+car,yes,You back into a parked car,Your insurance pays for their repair (burgerlijke aansprakelijkheid).
+car,yes,You skid on ice and hit a lamppost,"The omnium pays to repair your own car, even though it was your fault (materiële schade)."
+car,yes,Hail dents the roof,"Paid: hail, storm, fire and broken glass are covered."
+car,yes,Your car is stolen,"Paid, within the theft conditions."
+car,no,The gearbox breaks,Not paid: breakdowns and wear are not insured.
+car,no,You crash after drinking,The insurer may claim the cost back from you.
+car,no,Your laptop is stolen from the car,Not paid by the car policy.
+car,no,You are hurt in your own crash,"Not part of this policy, and neither are legal costs."
+home,yes,A fire starts in the kitchen,The damage to the building is paid (brandverzekering).
+home,yes,A storm takes tiles off the roof,"Paid: storm, hail and snow damage."
+home,yes,A pipe bursts and floods the ground floor,Paid: water damage.
+home,yes,Lightning hits the house,Paid.
+home,no,Burglars take your laptop,Only if you chose theft cover when you signed.
+home,no,Damp slowly ruins a wall,Not paid: slow damage from age or damp.
+home,no,The garden shed or pool is damaged,"Often covered separately, so check."
+hospital,yes,You break a leg and stay three nights,The costs your mutuality does not pay.
+hospital,yes,You have planned surgery,The fees and treatment during the stay.
+hospital,yes,You choose a single room,The room supplement.
+hospital,yes,You need check-ups after the stay,Consultations and medication before and after.
+hospital,no,A condition you already had,May be excluded or have a waiting period.
+hospital,no,Cosmetic surgery,Unless it is medically needed.
+hospital,no,Glasses or a visit to the dentist,Not part of hospitalisation cover.
+mortgage,yes,A borrower dies,The rest of the loan is repaid (schuldsaldo).
+mortgage,yes,Your partner stays in the house,They are not left with the debt.
+mortgage,no,You fall ill and cannot work,No payments are covered.
+mortgage,no,You lose your job,No payments are covered.
+mortgage,no,You are already behind on payments,Arrears are not covered.
+travel,yes,You pay for the holiday with the card and get ill abroad,"Medical costs, within the limits."
+travel,yes,Your bag is lost on the flight,"Luggage, within the limits."
+travel,yes,You have to cancel a trip you paid with the card,"Cancellation, within the limits."
+travel,yes,A laptop you bought with the card is stolen next week,Purchase protection.
+travel,no,You paid for the trip another way,The card conditions do not apply.
+travel,no,A six-month exchange semester,Long stays are usually limited in length. Check the maximum.
+travel,no,Your child is not named on the cover,Only the people listed are insured.

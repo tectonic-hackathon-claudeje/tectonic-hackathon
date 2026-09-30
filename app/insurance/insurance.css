@@ -316,3 +316,22 @@ html[data-theme="dark"] .skip-link { color: var(--accent-ink); }
 .em-legend .l-on { background: var(--accent); }
 .em-legend .l-gap { border: 1.6px dashed var(--gap); }
 .em-legend .l-soon { border: 1.6px dotted var(--soon); }
+
+/* What a policy covers and does not: plain facts, no calls to action */
+.cw-coverage { font-family: system-ui, sans-serif; }
+.cw-cov { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.55rem; }
+.cw-cov li { display: flex; gap: 0.65rem; align-items: flex-start; }
+.cw-cov li > span { flex: none; display: grid; place-items: center; width: 1.3rem; height: 1.3rem; margin-top: 0.1rem; border-radius: 50%; font-size: 0.75rem; font-weight: 700; }
+.cw-cov-yes li > span { background: var(--accent); color: var(--accent-ink); }
+.cw-cov-no li > span { border: 1.5px solid var(--muted); color: var(--muted); }
+.cw-cov li > div { display: grid; gap: 0.1rem; }
+.cw-cov strong { font-size: 0.95rem; font-weight: 600; line-height: 1.3; }
+.cw-cov small { color: var(--muted); font-size: 0.84rem; line-height: 1.35; }
+.cw-cov-note { margin: 0.9rem 0 0 !important; font-size: 0.82rem; }
+
+.cw-personal { margin: 1rem 0 0 !important; padding: 0.7rem 0.85rem; border-radius: 12px; background: color-mix(in srgb, var(--accent) 10%, var(--bg)); font-size: 0.93rem; line-height: 1.4; }
+
+/* Talking to the insurance itself */
+.cw-ai { margin-left: 0.2rem; padding: 0.05rem 0.4rem; border: 1px solid var(--line); border-radius: 999px; font: 600 0.62rem ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); cursor: help; }
+.cw-from { display: block; margin-bottom: 0.15rem; font: 600 0.68rem ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+.cw-chat-head strong { font-size: 0.95rem; }

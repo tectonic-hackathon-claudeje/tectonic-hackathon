@@ -42,6 +42,8 @@ export type Asset = {
   via?: Record<string, string>;
   /** A missing cover told as a short story: what is wrong, and why it matters to this person. */
   story?: { headline: string; line: string };
+  /** Everyday situations in which a policy pays, and in which it does not (sample text; the conditions decide). */
+  scenarios?: { pays: { scenario: string; outcome: string }[]; not: { scenario: string; outcome: string }[] };
   /** Plain facts about a person, used to decide what is relevant to them. */
   meta?: { age?: number; monthly?: number; renews?: string };
 };
@@ -270,6 +272,10 @@ export function buildEgo(model: InsuranceModel): EgoModel {
       links,
       coverId: cover,
       products: kbc.policyCovers[cover] ?? [],
+      scenarios: {
+        pays: readTable("scenarios", true).filter((c) => c.cover === cover && c.pays === "yes").map((c) => ({ scenario: c.scenario, outcome: c.outcome })),
+        not: readTable("scenarios", true).filter((c) => c.cover === cover && c.pays === "no").map((c) => ({ scenario: c.scenario, outcome: c.outcome })),
+      },
       meta: { monthly: p.frequency === "yearly" ? Number(p.premium) / 12 : p.frequency === "monthly" ? Number(p.premium) : 0, renews: p.renewal_date || undefined },
     });
     if (p.paid_from) relate(`pol:${p.policy_id}`, `acc:${p.paid_from}`, "paid from", "pays premium");

@@ -191,8 +191,14 @@ export function Panel({
   const tagline = gap ? gap.story?.headline : asset.kind === "policy" || asset.kind === "product" || asset.kind === "property" ? (state === "neutral" ? "Not needed right now" : STATE_WORD[state as Status]) : asset.kind === "category" || asset.kind === "group" ? asset.caption : undefined;
   const renews = asset.facts.find((f) => f.k === "Renews")?.v;
   const good = goodToKnow(asset, lookup);
+  const policy = asset.kind === "policy" ? asset : viaPolicy?.kind === "policy" ? viaPolicy : undefined;
+  const scenarios = policy?.scenarios;
+  // One line that is about this person's own policy, from what is on file.
+  const note = policy?.facts.find((f) => f.k === "Note")?.v;
+  const personal = note ? (/value declining/i.test(note) ? "Your car is getting older: the omnium pays up to its current value, which falls each year." : /employer/i.test(note) ? "Worth knowing: an employer may offer hospital cover too, so you might be paying twice." : `${note}.`) : undefined;
   const docs = asset.links.filter((l) => l.pdf);
   const links = asset.links.filter((l) => !l.pdf && !/\(mock\)/.test(l.label));
+  const insurerLink = policy ? links.find((l) => l.external) : undefined;
   const canAct = level === "self" || level === "joint" || level === "proxy";
   const banner = BANNER[level](personName);
   const first = stories.slice(0, 3);
@@ -275,10 +281,42 @@ export function Panel({
       {asset.kind === "product" && !gap && state === "neutral" ? <p className="cw-line">{asset.facts.find((f) => f.k === "Covers")?.v}</p> : null}
       {["account", "card", "loan", "goal", "property"].includes(asset.kind) ? <p className="cw-line">{asset.caption}</p> : null}
 
-      {docs.length > 0 ? (
+      {scenarios && (scenarios.pays.length > 0 || scenarios.not.length > 0) ? (
+        <div className="cw-coverage">
+          {scenarios.pays.length > 0 ? (
+            <>
+              <p className="cw-label">When it pays</p>
+              <ul className="cw-cov cw-cov-yes">
+                {scenarios.pays.map((c) => (
+                  <li key={c.scenario}><span aria-hidden="true">✓</span><div><strong>{c.scenario}</strong><small>{c.outcome}</small></div></li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {scenarios.not.length > 0 ? (
+            <>
+              <p className="cw-label">When it does not</p>
+              <ul className="cw-cov cw-cov-no">
+                {scenarios.not.map((c) => (
+                  <li key={c.scenario}><span aria-hidden="true">✕</span><div><strong>{c.scenario}</strong><small>{c.outcome}</small></div></li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {personal ? <p className="cw-personal">{personal}</p> : null}
+          <p className="cw-muted cw-cov-note">Typical situations for this kind of policy. Your own conditions decide.</p>
+        </div>
+      ) : null}
+
+      {docs.length > 0 || insurerLink ? (
         <>
           <p className="cw-label">Documents</p>
           <ul className="cw-docs">
+            {insurerLink ? (
+              <li>
+                <a href={insurerLink.href} target="_blank" rel="noopener noreferrer"><PixelIcon id="building" size={20} /> <span>{insurerLink.label}</span> <small>website ↗</small></a>
+              </li>
+            ) : null}
             {docs.map((d) => (
               <li key={d.href}>
                 <a href={d.href} target="_blank" rel="noopener noreferrer">
@@ -290,9 +328,9 @@ export function Panel({
         </>
       ) : null}
 
-      {good.length > 0 || links.length > 0 ? (
+      {!policy && (good.length > 0 || links.length > 0) ? (
         <details className="cw-more">
-          <summary>Good to know</summary>
+          <summary>Details</summary>
           <ul className="cw-good">
             {good.map((l, i) => (
               <li key={i}>

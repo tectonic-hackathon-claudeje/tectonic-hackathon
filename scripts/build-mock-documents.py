@@ -63,22 +63,33 @@ MOCK = "MOCK DOCUMENT made for a hackathon demo. It is not an official KBC or in
 persons = {r["person_id"]: f'{r["first_name"]} {r["last_name"]}' for r in csv.DictReader(open(f"{LAKE}/persons.csv"))}
 count = 0
 
+def cover_of(product):
+    p = product.lower()
+    for key, words in (("mortgage", ("mortgage protection", "schuldsaldo")), ("travel", ("travel",)), ("home", ("home",)), ("car", ("car insurance", "omnium")), ("hospital", ("hospital",))):
+        if any(w in p for w in words):
+            return key
+    return ""
+
+coverage = {}
+for r in csv.DictReader(open("data/scenarios.csv")):
+    coverage.setdefault((r["cover"], "covered" if r["pays"] == "yes" else "not"), []).append(f'{r["scenario"]}: {r["outcome"]}')
+
 for p in csv.DictReader(open(f"{LAKE}/insurance_policies.csv")):
     who = ", ".join(persons.get(i, i) for i in json.loads(p["insured"]))
     facts = f'Insurer: {p["insurer"]}. Policy {p["policy_id"]}. Insured: {who}. Premium: {p["premium"]} ({p["frequency"]}).' + (f' Renewal: {p["renewal_date"]}.' if p["renewal_date"] else "")
     pdf(f'{OUT}/policy-{p["policy_id"]}-conditions.pdf', f'Policy conditions: {p["product"]}', [
         ("About this document", MOCK),
         ("Your policy", facts),
-        ("What is insured", "Sample text. The cover described in the product name, for the people and the object named above, within the limits agreed at signing."),
-        ("What is not insured", "Sample text. Intentional damage, war, and anything excluded in the special conditions."),
+        ("What is insured", " ".join(coverage.get((cover_of(p["product"]), "covered"), [])) or "Sample text. The cover described in the product name, within the limits agreed at signing."),
+        ("What is not insured", " ".join(coverage.get((cover_of(p["product"]), "not"), [])) or "Sample text. Intentional damage, war, and anything excluded in the special conditions."),
         ("Claims", "Report a claim as soon as possible through your advisor or the app. Keep bills and photos."),
         ("Ending the contract", "Sample text. Notice periods and renewal follow the contract. Ask your advisor before the renewal date."),
     ])
     pdf(f'{OUT}/policy-{p["policy_id"]}-key-information.pdf', f'Key information: {p["product"]}', [
         ("About this document", MOCK),
         ("What kind of insurance is this?", p["product"] + "."),
-        ("What is insured?", "Sample text. See the policy conditions for the full list."),
-        ("What is not insured?", "Sample text. See the policy conditions for exclusions."),
+        ("What is insured?", " ".join(coverage.get((cover_of(p["product"]), "covered"), [])) or "Sample text. See the policy conditions for the full list."),
+        ("What is not insured?", " ".join(coverage.get((cover_of(p["product"]), "not"), [])) or "Sample text. See the policy conditions for exclusions."),
         ("Where am I covered?", "Sample text. Usually in Belgium; some covers extend abroad."),
         ("What do I pay?", f'{p["premium"]} ({p["frequency"]}). Mock figure.'),
     ])

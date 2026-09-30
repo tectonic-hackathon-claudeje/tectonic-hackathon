@@ -11,4 +11,6 @@ export type Msg = {
   nav?: { to: Nav; from: Nav; undone?: boolean };
   /** An offer for a missing cover, shown as a card with "not needed" as an equal choice. */
   offerGapId?: string;
+  /** Who said it: the insurance that was selected at the time. */
+  from?: { label: string; glyph: string };
 };

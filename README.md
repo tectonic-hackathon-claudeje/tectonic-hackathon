@@ -47,3 +47,7 @@ A person-centred map of the mock NovaBank family: the four KBC insurance categor
 - `npm run build:documents` writes mock PDFs to `public/documents/` (policy conditions, key-information sheets, bank notices). They are clearly marked as mock.
 - `data/properties.csv` lists the homes by address (the Blankenberge apartment is added demo data).
 - `GET /api/assist?q=…&person=P03` runs the same assistant the page uses, for testing and as the place a real LLM would plug in.
+
+### Talking to the insurance itself
+
+The chat speaks as whatever is selected: your car insurance says "I pay when you back into a parked car, I don't when the gearbox breaks", a cover you do not have speaks for itself ("I'm not in place for you, nothing is decided"), and a question that is not its job is handed over to the right insurance. Everything is labelled "AI voice" so it is never mistaken for the insurer. The situations come from `data/scenarios.csv` (sample text; the real conditions decide).

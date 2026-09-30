@@ -3,7 +3,7 @@ import { forViewer } from "@/lib/insurance/access";
 import { alertsFor } from "@/lib/insurance/alerts";
 import { buildEgo } from "@/lib/insurance/ego";
 import { buildModel } from "@/lib/insurance/model";
-import { answer } from "@/app/insurance/assistant";
+import { answer, speakerFor } from "@/app/insurance/assistant";
 
 /**
  * Ask the assistant a question without the UI, for testing and as the seam for a real LLM later:
@@ -22,10 +22,12 @@ export function GET(req: Request) {
   const personId = model.people.some((p) => p.id === url.searchParams.get("person")) ? (url.searchParams.get("person") as string) : VIEWER;
   const shown = ego.assets[url.searchParams.get("shown") ?? ""] ?? ego.assets[`person:${personId}`];
   const { mine, others } = alertsFor(ego, personId, levelOf);
-  const a = answer(q, { ego, model, viewer: VIEWER, personId, shown, mine, others });
+  const speaker = speakerFor(shown, shown.kind === "gap" ? shown : undefined, undefined, ego);
+  const a = answer(q, { ego, model, viewer: VIEWER, personId, shown, mine, others, speaker });
   return NextResponse.json({
     you_asked: q,
     looking_at: model.people.find((p) => p.id === personId)?.name,
+    speaking_as: speaker.label,
     reply: a.text,
     moves_the_map_to: a.navigate ? { person: a.navigate.person ?? personId, steps: a.navigate.steps.map((s) => ("id" in s ? s.id : "")) } : null,
     shows_an_offer_for: a.offerGapId ?? null,
