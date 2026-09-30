@@ -251,7 +251,7 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
     ...Object.values(ego.assets)
       .filter((a) => a.kind === "policy" && ["covered", "shared"].includes(a.personState[personId] ?? ""))
       .map((a) => ({ id: a.id, label: a.label, glyph: a.glyph, inPlace: true })),
-    ...alerts.mine.filter((a) => a.kind === "gap").slice(0, 4).map((a) => ({ id: a.id, label: a.label, glyph: a.glyph, inPlace: false })),
+    ...alerts.mine.filter((a) => a.kind === "gap").slice(0, 3).map((a) => ({ id: a.id, label: a.label, glyph: a.glyph, inPlace: false })),
   ];
   const pick = (assetId: string) => {
     const a = ego.assets[assetId];

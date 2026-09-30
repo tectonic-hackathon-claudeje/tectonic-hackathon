@@ -49,10 +49,12 @@ export function ChatPanel({
       <section className="cw-chat cw-chat-pick" aria-label="Talk to an insurance">
         <header className="cw-chat-head">
           <span className="cw-sam"><PixelIcon id="fraud" size={18} ink="#ffffff" accent="#ffffff" /></span>
-          <strong>Talk to an insurance</strong>
+          <span className="cw-who">
+            <strong>Talk to an insurance</strong>
+            <small>Pick one to start</small>
+          </span>
           <button type="button" className="cw-person" onClick={() => onAction({ kind: "call", label: "Talk to a person" })}>Talk to a person</button>
         </header>
-        <p className="cw-opener">{opener}</p>
         <div className="cw-picks">
           {picks.map((p) => (
             <button key={p.id} type="button" className={p.inPlace ? "cw-pick cw-pick-on" : "cw-pick"} onClick={() => onPick(p.id)}>
@@ -71,9 +73,8 @@ export function ChatPanel({
         <span className="cw-sam"><PixelIcon id={speaker.glyph} size={18} ink="#ffffff" accent="#ffffff" /></span>
         <span className="cw-who">
           <strong>{speaker.label}</strong>
-          {speaker.sub ? <small>{speaker.sub}</small> : null}
+          <small title="This voice is made up by the app to help you. It is not a statement from the insurer.">{speaker.sub ? `${speaker.sub} · ` : ""}AI voice</small>
         </span>
-        <small className="cw-ai" title="This voice is made up by the app to help you. It is not a statement from the insurer.">AI voice</small>
         <button type="button" className="cw-person" onClick={() => onAction({ kind: "call", label: "Talk to a person" })}>Talk to a person</button>
       </header>
 

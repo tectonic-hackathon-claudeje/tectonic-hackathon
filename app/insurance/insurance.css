@@ -358,3 +358,16 @@ html[data-theme="dark"] .skip-link { color: var(--accent-ink); }
 .cw-pick-on > span { background: var(--accent); }
 .cw-pick:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .cw-msg-assistant { border-left: 3px solid var(--accent); border-radius: 4px 14px 14px 4px; }
+
+/* Clean header row and a picker that fits */
+.cw-chat-head { flex-wrap: nowrap; padding: 0.55rem 1rem !important; }
+.cw-who strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cw-who small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.72rem; }
+.cw-chat-head .cw-person { flex: none; margin-left: auto; white-space: nowrap; font-size: 0.78rem; }
+.cw-chat-pick { max-height: 62%; overflow-y: auto; }
+.cw-picks { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; margin-top: 0.7rem; margin-bottom: 0.9rem; }
+.cw-pick { min-width: 0; width: 100%; padding: 0.22rem 0.6rem 0.22rem 0.22rem; font-size: 0.8rem; }
+.cw-pick > span { flex: none; width: 1.7rem; height: 1.7rem; }
+.cw-pick { white-space: nowrap; }
+.cw-pick > :last-child { overflow: hidden; text-overflow: ellipsis; }
+.cw-pick em { font-style: normal; overflow: hidden; text-overflow: ellipsis; }
