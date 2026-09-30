@@ -10,6 +10,9 @@ import { PixelIcon } from "./pixel";
 import { PosterMap } from "./PosterMap";
 import { answer, suggestions, type Action, type Answer } from "./assistant";
 import { assetScene, categoryScene, groupScene, personScene, stepLabel, type Step } from "./scenes";
+import { UnusualActivityReview } from "./UnusualActivityReview";
+import { UnusualActivityToast } from "./UnusualActivityToast";
+import { formatEuro, isReviewHandled, UNUSUAL_TRANSFER, type ReviewOutcome } from "./unusualTransfer";
 
 type Theme = "kbc" | "dark" | "plain";
 type View = "person" | "family";
@@ -25,6 +28,8 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [proposal, setProposal] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const [alertOutcome, setAlertOutcome] = useState<ReviewOutcome>("pending");
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   // The theme belongs to the whole page, so it lives on <html>.
   useEffect(() => {
@@ -75,6 +80,12 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
     },
     [switchPerson, ego, personId],
   );
+  const openForPerson = useCallback((id: string, assetId: string) => {
+    setView("person");
+    setPersonId(id);
+    setTrail([{ kind: "asset", id: assetId }]);
+    setSelectedId(null);
+  }, []);
   const back = useCallback(() => {
     setTrail((t) => t.slice(0, -1));
     setSelectedId(null);
@@ -89,7 +100,7 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
   }, []);
 
   useEffect(() => {
-    if (view !== "person") return;
+    if (view !== "person" || reviewOpen) return;
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target?.closest("input, textarea, select")) return;
@@ -106,7 +117,7 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, back, overview, open, shown, scene.center.id]);
+  }, [view, reviewOpen, back, overview, open, shown, scene.center.id]);
 
   const toggleProposal = useCallback((id: string) => setProposal((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id])), []);
   const proposalNodes = proposal.map((id) => nodesById.get(id)).filter((n): n is NonNullable<typeof n> => Boolean(n));
@@ -137,6 +148,11 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
   const gap = shown.kind === "gap" ? shown : viaAsset?.kind === "gap" ? viaAsset : undefined;
   const canOpen = shown.id !== scene.center.id && shown.kind !== "person";
   const canSwitch = shown.kind === "person" && shown.id !== `person:${personId}`;
+  const alertInitiator = model.people.find((p) => p.id === UNUSUAL_TRANSFER.initiatorId);
+  const alertReviewer = model.people.find((p) => p.id === UNUSUAL_TRANSFER.reviewerId);
+  const alertAccount = ego.assets[UNUSUAL_TRANSFER.accountId];
+  const nameOf = (id: string) => model.people.find((p) => p.id === id)?.name ?? id;
+  const transferTaskOpen = Boolean(alertInitiator && alertReviewer && alertAccount) && !isReviewHandled(alertOutcome);
 
   // The switcher is about the person being looked at: their spouse, children, parents, and so on.
   const menuGroups = useMemo(() => {
@@ -157,7 +173,7 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
     const others = all.filter((a) => !a.personIds.includes(personId) && rank(a) <= 1).slice(0, 6);
     return { mine, others };
   }, [ego, personId]);
-  const alertCount = alerts.mine.length + alerts.others.length;
+  const alertCount = alerts.mine.length + alerts.others.length + (transferTaskOpen ? 1 : 0);
 
   const openAlert = useCallback((a: Asset, e?: React.MouseEvent<HTMLButtonElement>) => {
     e?.currentTarget.closest("details")?.removeAttribute("open");
@@ -233,6 +249,33 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
             </summary>
             <div>
               {alertCount === 0 ? <p>Nothing needs attention.</p> : null}
+              {transferTaskOpen && alertInitiator && alertReviewer && alertAccount ? (
+                <section>
+                  <h3>{personId === alertReviewer.id ? `To do for ${alertReviewer.name}` : `Waiting on ${alertReviewer.name}`}</h3>
+                  <ul>
+                    <li>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.currentTarget.closest("details")?.removeAttribute("open");
+                          setReviewOpen(true);
+                        }}
+                      >
+                        <span className="cw-toast-icon" aria-hidden="true">!</span>
+                        <span>
+                          <strong>
+                            <i className="cw-dot cw-dot-gap" aria-hidden="true" />
+                            Check {alertInitiator.name}&apos;s {formatEuro(UNUSUAL_TRANSFER.amountEur)} transfer
+                          </strong>
+                          <small>
+                            On hold from {alertAccount.label} · {UNUSUAL_TRANSFER.when}. {alertReviewer.name} confirms or blocks it with {alertInitiator.name}.
+                          </small>
+                        </span>
+                      </button>
+                    </li>
+                  </ul>
+                </section>
+              ) : null}
               {[{ title: `For ${person.name}`, items: alerts.mine }, { title: "Elsewhere in the family", items: alerts.others }]
                 .filter((g) => g.items.length > 0)
                 .map((g) => (
@@ -335,6 +378,35 @@ export function InsuranceTree({ model, ego, initialTheme, initialPerson }: { mod
           </section>
         </div>
       )}
+      {alertInitiator && alertReviewer && alertAccount ? (
+        <UnusualActivityToast
+          visible={alertOutcome === "pending" && !reviewOpen && personId === alertReviewer.id}
+          initiatorName={alertInitiator.name}
+          reviewerName={alertReviewer.name}
+          accountLabel={alertAccount.label}
+          onReview={() => setReviewOpen(true)}
+          onDismiss={() => setAlertOutcome("dismissed")}
+        />
+      ) : null}
+      {reviewOpen ? (
+        <UnusualActivityReview
+          ego={ego}
+          nameOf={nameOf}
+          outcome={alertOutcome}
+          proposal={proposal}
+          onClose={() => setReviewOpen(false)}
+          onDecide={setAlertOutcome}
+          onShowAccount={() => {
+            setReviewOpen(false);
+            openForPerson(UNUSUAL_TRANSFER.reviewerId, UNUSUAL_TRANSFER.accountId);
+          }}
+          onOpenForPerson={(id, assetId) => {
+            setReviewOpen(false);
+            openForPerson(id, assetId);
+          }}
+          onToggleProposal={toggleProposal}
+        />
+      ) : null}
     </div>
   );
 }

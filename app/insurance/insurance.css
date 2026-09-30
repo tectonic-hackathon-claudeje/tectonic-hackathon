@@ -106,6 +106,40 @@ html[data-theme="dark"] .skip-link { color: var(--accent-ink); }
 .cw-ring-dot { border: 2px dotted var(--soon); }
 .cw-ring-faint { opacity: 0.35; }
 
+/* Unusual-activity alert */
+.cw-toast { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 60; width: min(420px, calc(100vw - 2.5rem)); display: grid; grid-template-columns: auto 1fr auto; gap: 0.75rem; padding: 0.9rem 0.9rem 1rem; border: 1px solid var(--gap); border-left-width: 4px; border-radius: 12px; background: var(--surface); color: var(--ink); box-shadow: 0 12px 34px rgb(0 0 0 / 0.3); animation: cw-toast-in 0.25s ease-out; }
+.cw-toast p { margin: 0; }
+.cw-toast .cw-kind { color: var(--gap); }
+.cw-toast-icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--gap-bg); color: var(--gap); font-weight: 800; }
+.cw-toast-body { display: grid; gap: 0.3rem; }
+.cw-toast-title { font-weight: 700; font-size: 1.02rem; }
+.cw-toast-detail { font-size: 0.86rem; line-height: 1.45; color: var(--muted); }
+.cw-toast-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cw-toast-actions button { margin-top: 0.35rem; }
+.cw-toast-close { align-self: start; width: 1.8rem; height: 1.8rem; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; }
+.cw-toast-close:hover { color: var(--ink); }
+@keyframes cw-toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cw-toast { animation: none; } }
+.cw-review { width: min(560px, calc(100vw - 2rem)); max-height: calc(100dvh - 3rem); padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgb(0 0 0 / 0.4); }
+.cw-review::backdrop { background: rgb(0 0 0 / 0.5); }
+.cw-review-head { position: sticky; top: 0; z-index: 1; display: grid; grid-template-columns: 1fr auto; padding: 1rem 1.25rem 0.8rem; border-bottom: 1px solid var(--line); background: var(--surface); }
+.cw-review-head .cw-kind { grid-column: 1; margin: 0; color: var(--gap); }
+.cw-review-head h2 { grid-column: 1; margin: 0.25rem 0 0; font-family: "Iowan Old Style", "Charter", Georgia, serif; font-size: 1.35rem; font-weight: 600; }
+.cw-review-head .cw-toast-close { grid-column: 2; grid-row: 1 / span 2; }
+.cw-review-steps { margin: 0; padding: 0 1.25rem 1.25rem; list-style: none; counter-reset: step; }
+.cw-review-steps > li { counter-increment: step; padding: 1rem 0; border-bottom: 1px solid var(--line); }
+.cw-review-steps > li:last-child { border-bottom: 0; }
+.cw-review-steps h3 { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.7rem; font: 600 0.72rem ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.cw-review-steps h3::before { content: counter(step); width: 1.4rem; height: 1.4rem; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 0.7rem; }
+.cw-review p { margin: 0.3rem 0; }
+.cw-review-sub { margin-top: 0.8rem !important; font-size: 0.8rem; color: var(--muted); }
+.cw-review-signals { margin: 0.2rem 0 0; padding-left: 1.1rem; font-size: 0.9rem; line-height: 1.5; }
+.cw-review-signals li::marker { color: var(--gap); }
+.cw-review-verdict { font-weight: 600; line-height: 1.45; }
+.cw-review-owners { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
+.cw-review-owners li { display: grid; grid-template-columns: 5rem auto 1fr; gap: 0.75rem; align-items: center; font-size: 0.92rem; }
+.cw-review-owners button { justify-self: end; border: 0; background: none; padding: 0; font: inherit; font-size: 0.85rem; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
 /* The centre-and-territories map */
 .em { position: absolute; inset: 0; }
 .em-surface { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; user-select: none; }
@@ -174,6 +208,7 @@ html[data-theme="dark"] .skip-link { color: var(--accent-ink); }
 .cw-alerts li strong, .cw-alert-list li strong { font-size: 0.95rem; }
 .cw-alerts li em, .cw-alert-list li em { font: 700 0.68rem ui-monospace, Menlo, monospace; text-transform: uppercase; letter-spacing: 0.05em; font-style: normal; }
 .cw-alerts li small, .cw-alert-list li small { color: var(--muted); font-size: 0.82rem; line-height: 1.35; }
+.cw-alerts li .cw-toast-icon { flex: none; }
 .cw-alert-list { margin-top: 0.4rem; }
 .cw-alert-list h3 { padding-top: 0.9rem; border-top: 1px solid var(--line); }
 
