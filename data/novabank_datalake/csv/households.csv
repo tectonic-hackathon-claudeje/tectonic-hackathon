@@ -1,0 +1,3 @@
+household_id,name,address,members,head_contact,dwelling,size
+H01,Peeters-Janssens household,"Leuvenselaan 112, 3300 Tienen","[""P01"", ""P02"", ""P05"", ""P06""]",P01,owned house (mortgage),4
+H02,Peeters-Claes (grandparents),"Schaffensestraat 45, 3290 Diest","[""P03"", ""P04""]",P03,owned house (paid off),2

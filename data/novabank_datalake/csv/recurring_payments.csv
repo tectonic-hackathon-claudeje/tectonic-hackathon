@@ -1,0 +1,51 @@
+recurring_id,account_id,kind,counterparty,counterparty_iban,typical_amount,frequency,category,subcategory,owner_id,start_date,end_date,note,mandate_reference
+RC001,A03,incoming,Vandermeulen Engineering NV,BE19096401598512,4035.0,monthly,income,salary,P01,2025-10-01,,Net monthly salary,
+RC002,A04,incoming,Onderwijs Vlaanderen - AgODi,BE17096237329921,3140.0,monthly,income,salary,P02,2025-10-01,,"Net teacher salary, paid last working day",
+RC003,A01,incoming,Groeipakket - Infino,BE18310981133565,172.6,monthly,income,child_benefit,P02,2025-10-01,,Groeipakket for Lotte (student < 25),
+RC004,A10,incoming,Federale Pensioendienst,BE46734583079436,1966.2,monthly,income,pension,P03,2025-10-01,,Jozef state pension,
+RC005,A10,incoming,Federale Pensioendienst,BE46734583079436,1072.9,monthly,income,pension,P04,2025-10-01,,Maria state pension,
+RC006,A10,incoming,Vlaamse Sociale Bescherming - Zorgbudget,BE02063298081540,140.0,monthly,income,care_allowance,P03,2026-04-01,,Zorgbudget voor zwaar zorgbehoevenden - approved March 2026,
+RC007,A20,incoming,Cloudwise BV,BE73751801493660,2485.0,monthly,income,salary,P05,2025-10-01,,Net salary - raise from March 2026,
+RC008,A20,incoming,Cloudwise BV,BE73751801493660,64.8,monthly,income,expense_reimbursement,P05,2025-10-01,,Home-work (train) reimbursement,
+RC009,A30,incoming,Delhaize Le Lion SA (studentenjob),BE63363354987708,133.25,monthly,income,student_job,P06,2025-10-01,,Variable student-job pay (hours based),
+RC010,A03,standing_order,own/family account A01,BE05735210033175,-3000,monthly,transfers,household_contribution,P01,2025-10-01,,Bijdrage gezamenlijke rekening,
+RC011,A04,standing_order,own/family account A01,BE05735210033175,-2600,monthly,transfers,household_contribution,P02,2025-10-01,,Bijdrage gezamenlijke rekening,
+RC012,A20,standing_order,own/family account A01,BE05735210033175,-300,monthly,family,household_contribution,P05,2025-10-01,,Bijdrage thuis Arne,
+RC013,A01,standing_order,own/family account A30,BE28735221900420,-250,monthly,family,allowance,P02,2025-10-01,,Zakgeld + eten Lotte,
+RC014,A01,standing_order,own/family account A02,BE54735210888997,-550,monthly,savings_investments,savings_transfer,P01,2025-10-01,,Maandelijks sparen,
+RC015,A20,standing_order,own/family account A21,BE51735219508762,-750,monthly,savings_investments,savings_transfer,P05,2025-10-01,,Appartement sparen,
+RC016,A20,standing_order,own/family account A21,BE51735219508762,-1150,monthly,savings_investments,savings_transfer,P05,2026-03-01,,Appartement sparen,
+RC017,A30,standing_order,own/family account A31,BE76735222674295,-25,monthly,savings_investments,savings_transfer,P06,2025-10-01,,Spaarpotje,
+RC018,A10,standing_order,own/family account A11,BE41735217136710,-1000,monthly,savings_investments,savings_transfer,P03,2025-10-01,,Maandelijks sparen,
+RC019,A03,standing_order,own/family account A05,BE91735213234276,-87.5,monthly,savings_investments,pension_savings,P01,2025-10-01,,Pensioensparen,
+RC020,A04,standing_order,own/family account A06,BE85735213964406,-87.5,monthly,savings_investments,pension_savings,P02,2025-10-01,,Pensioensparen,
+RC021,A01,standing_order,own/family account A08,BE11735215627348,-250,monthly,savings_investments,investment_plan,P01,2025-10-01,,Beleggingsplan,
+RC022,A20,standing_order,own/family account A23,BE29735221138564,-150,monthly,savings_investments,investment_plan,P05,2025-10-01,,ETF plan,
+RC023,A01,direct_debit,NovaBank Woonkrediet L01,BE95063552882958,-1087.44,monthly,housing,mortgage,P01,2025-10-01,,Mortgage installment (see loans),DOM73632401
+RC024,A01,direct_debit,NovaBank Autolening L02,BE18068239225265,-392.18,monthly,transport,car_loan,P01,2025-10-01,,Car loan - last installment March 2027,DOM33651543
+RC025,A01,direct_debit,Engie,BE49001271764471,-198.0,monthly,utilities,energy,P01,2025-10-01,,Monthly advance gas+electricity; lowered after annual settlement,DOM10031310
+RC026,A01,direct_debit,De Watergroep,BE76751145369795,-96.4,quarterly,utilities,water,P01,2025-10-01,,,DOM80881649
+RC027,A01,direct_debit,Telenet,BE70096772236825,-139.95,monthly,utilities,internet_tv_mobile,P01,2025-10-01,,Bundle: internet + TV + 3 mobile lines; price increase Feb 2026,DOM40432459
+RC028,A01,direct_debit,AG Insurance,BE21363245542103,-684.2,yearly,housing,home_insurance,P01,2025-10-01,,Fire/home insurance - renews each November,DOM63128543
+RC029,A01,direct_debit,Ethias,BE64063366516252,-91.35,monthly,transport,car_insurance,P01,2025-10-01,,,DOM32817504
+RC030,A01,direct_debit,DKV Belgium,BE29363868666564,-58.2,monthly,health,hospitalisation_insurance,P02,2025-10-01,,Family top-up; kids covered until 25,DOM98915866
+RC031,A01,direct_debit,CM Christelijke Mutualiteit,BE51751959264362,-128.0,yearly,health,mutuality,P02,2025-10-01,,,DOM36763445
+RC032,A01,direct_debit,Pluxee Dienstencheques,BE70751994704425,-180.0,monthly,household_services,cleaning_service_vouchers,P02,2025-10-01,,,DOM74160948
+RC033,A01,outgoing,Vlaamse Belastingdienst,BE29635668942464,-331.52,yearly,taxes,vehicle_tax,P01,2025-10-01,,,
+RC034,A01,outgoing,Vlaamse Belastingdienst,BE29635668942464,-1392.6,yearly,taxes,property_tax,P01,2025-10-01,,Onroerende voorheffing,
+RC035,A01,outgoing,Verhuurder Vandenbroeck (kot),BE65635428405096,-495.0,monthly,education,student_housing,P02,2025-10-01,,Lotte's kot rent - contract Sep-Jun,
+RC036,A01,card_subscription,Netflix,,-13.99,monthly,leisure,streaming,P01,2025-10-01,,,
+RC037,A01,card_subscription,Spotify,,-21.99,monthly,leisure,music_streaming,P01,2025-10-01,,Family plan - Arne & Lotte on it,
+RC038,A01,card_subscription,Disney+,,-9.99,monthly,leisure,streaming,P02,2025-12-26,,Started Christmas 2025; almost never used since Feb (see app_events),
+RC039,A10,direct_debit,Luminus,BE54310296724197,-158.0,monthly,utilities,energy,P03,2025-10-01,,,DOM38742736
+RC040,A10,direct_debit,Proximus,BE92068616250323,-71.99,monthly,utilities,internet_tv_landline,P03,2025-10-01,,,DOM65053374
+RC041,A10,direct_debit,De Watergroep,BE76751145369795,-71.2,quarterly,utilities,water,P03,2025-10-01,,,DOM59874681
+RC042,A10,direct_debit,Mediahuis - Het Nieuwsblad,BE81635688891324,-33.5,monthly,leisure,newspaper,P03,2025-10-01,,,DOM86554949
+RC043,A10,direct_debit,Pluxee Dienstencheques,BE70751994704425,-108.0,monthly,household_services,cleaning_service_vouchers,P04,2025-10-01,,Increased from 12 to 18 cheques/month in April 2026,DOM80814206
+RC044,A10,direct_debit,Wit-Gele Kruis Vlaams-Brabant,BE13363121628239,0.0,monthly,health,home_nursing_copay,P03,2026-03-01,,Home nursing after hip surgery; ongoing,DOM11275933
+RC045,A10,outgoing,OCMW Diest - Maaltijden aan huis,BE63751751417008,-206.4,monthly,household_services,meals_on_wheels,P01,2026-04-01,,Paid by Koen via proxy mandate,
+RC046,A10,direct_debit,AG Insurance,BE21363245542103,-512.4,yearly,housing,home_insurance,P03,2025-10-01,,,DOM68422688
+RC047,A10,outgoing,Vlaamse Belastingdienst,BE29635668942464,-948.3,yearly,taxes,property_tax,P01,2025-10-01,,,
+RC048,A10,direct_debit,CM Christelijke Mutualiteit,BE51751959264362,-128.0,yearly,health,mutuality,P03,2025-10-01,,,DOM14911818
+RC049,A10,standing_order,Rode Kruis Vlaanderen,BE77734100922142,-15.0,monthly,charity,donation,P04,2025-10-01,,,
+RC050,A20,card_subscription,Basic-Fit,,-29.99,monthly,leisure,sport,P05,2025-10-01,,,

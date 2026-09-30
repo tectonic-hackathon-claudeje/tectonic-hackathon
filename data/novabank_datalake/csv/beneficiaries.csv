@@ -1,0 +1,9 @@
+beneficiary_id,account_id,name,iban,added_on,added_by,verified_name_match,note
+BN001,A01,Verhuurder Vandenbroeck (kot),BE65635428405096,2023-09-01,P02,True,
+BN002,A01,KU Leuven,BE50363634397218,2023-09-01,P02,True,
+BN003,A01,Vlaamse Belastingdienst,BE29635668942464,2023-09-01,P01,True,
+BN004,A10,OCMW Diest - Maaltijden aan huis,BE63751751417008,2024-05-10,P01,True,
+BN005,A10,AZ Diest,BE83310590111815,2024-05-10,P01,True,
+BN006,A20,Notariskantoor Verhaegen,BE10635394436104,2023-09-01,P05,True,
+BN007,A10,Koen Peeters,BE06735211599222,2024-05-06,P01,True,
+BN008,A10,SAFE ACCOUNT NOVA SECURITY,LT213250098765432101,2026-06-17,P03,False,Added during phishing call; blocked & removed 2026-06-17 15:05

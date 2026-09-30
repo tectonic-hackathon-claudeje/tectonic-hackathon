@@ -1,0 +1,6 @@
+instrument_id,name,kind,isin,asset_class,sri_risk_class,ongoing_charges
+I01,NovaBank Balanced Growth Fund,fund,BE6300000001,mixed,3,0.0165
+I02,iShares Core MSCI World UCITS ETF (Acc),etf,IE00B4L5Y983,equity_global,4,0.002
+I03,Vanguard FTSE All-World UCITS ETF (Acc),etf,IE00BK5BQT80,equity_global,4,0.0022
+I04,NovaPension Stability (pension fund),pension_fund,BE6300000002,mixed_defensive,3,0.012
+I05,Belgian State Note 1y,bond,BE0000000001,government_bond,1,0.0

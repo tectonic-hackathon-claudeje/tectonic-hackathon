@@ -1,0 +1,52 @@
+merchant_id,name,category,subcategory,mcc,online,country
+M001,Colruyt,groceries,supermarket,5411,False,BE
+M002,Delhaize,groceries,supermarket,5411,False,BE
+M003,Aldi,groceries,supermarket,5411,False,BE
+M004,Lidl,groceries,supermarket,5411,False,BE
+M005,Carrefour Express,groceries,convenience_store,5411,False,BE
+M006,Bakkerij Vanhees,groceries,bakery,5462,False,BE
+M007,Slagerij De Smet,groceries,butcher,5422,False,BE
+M008,TotalEnergies,transport,fuel,5541,False,BE
+M009,Q8,transport,fuel,5541,False,BE
+M010,NMBS/SNCB,transport,public_transport,4112,True,BE
+M011,De Lijn,transport,public_transport,4131,True,BE
+M012,Garage Wouters,transport,car_maintenance,7538,False,BE
+M013,Interparking,transport,parking,7523,False,BE
+M014,Apotheek Centrum,health,pharmacy,5912,False,BE
+M015,Multipharma,health,pharmacy,5912,False,BE
+M016,Huisartsenpraktijk De Linde,health,doctor,8011,False,BE
+M017,AZ Diest,health,hospital,8062,False,BE
+M018,Netflix,leisure,streaming,4899,True,BE
+M019,Spotify,leisure,music_streaming,5815,True,BE
+M020,Disney+,leisure,streaming,4899,True,BE
+M021,Basic-Fit,leisure,sport,7997,False,BE
+M022,Padelclub Tienen,leisure,sport,7997,False,BE
+M023,Steam,leisure,games,5816,True,BE
+M024,Ticketmaster,leisure,events,7922,True,BE
+M025,Strava,leisure,subscriptions,5815,True,BE
+M026,Bol.com,shopping,online_marketplace,5999,True,BE
+M027,Coolblue,shopping,electronics,5732,True,BE
+M028,Zalando,shopping,clothing,5651,True,BE
+M029,Zeeman,shopping,clothing,5651,False,BE
+M030,ZARA,shopping,clothing,5651,False,BE
+M031,Standaard Boekhandel,shopping,books,5942,False,BE
+M032,Vinted,shopping,secondhand,5931,True,BE
+M033,Decathlon,shopping,sporting_goods,5941,False,BE
+M034,IKEA,shopping,home_furniture,5712,False,BE
+M035,Hubo,shopping,diy,5200,False,BE
+M036,Fnac,shopping,electronics,5732,False,BE
+M037,Alma Studentenrestaurant,eating_out,student_restaurant,5812,False,BE
+M038,Café Commerce,eating_out,cafe_bar,5813,False,BE
+M039,De Werf,eating_out,cafe_bar,5813,False,BE
+M040,Brasserie Het Gasthuis,eating_out,restaurant,5812,False,BE
+M041,Pizzeria Da Mario,eating_out,restaurant,5812,False,BE
+M042,Takeaway.com,eating_out,takeaway,5814,True,BE
+M043,Starbucks,eating_out,coffee,5814,False,BE
+M044,Frituur 't Pleintje,eating_out,takeaway,5814,False,BE
+M045,Vinci Autoroutes,travel,tolls,4784,False,FR
+M046,Airbnb,travel,accommodation,7011,True,BE
+M047,Brussels Airlines,travel,flights,3000,True,BE
+M048,Kapsalon Nathalie,personal_care,hairdresser,7230,False,BE
+M049,Kruidvat,personal_care,drugstore,5912,False,BE
+M050,HealthPlus Supplements Ltd,shopping,online_subscription,5968,True,GB
+M051,Proximus Shop,utilities,telecom,4814,False,BE

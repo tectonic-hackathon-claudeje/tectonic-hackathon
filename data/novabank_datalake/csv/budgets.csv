@@ -1,0 +1,5 @@
+budget_id,scope,account_id,owner_id,category,monthly_limit,created,alert_at_pct
+B01,account,A01,P02,groceries,850,2025-01-05,90
+B02,account,A01,P02,eating_out,200,2025-01-05,90
+B03,account,A30,P06,eating_out,150,2025-09-30,80
+B04,account,A20,P05,eating_out,300,2026-03-01,90

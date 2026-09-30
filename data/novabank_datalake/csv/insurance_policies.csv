@@ -1,0 +1,7 @@
+policy_id,insurer,product,insured,object,premium,frequency,renewal_date,paid_from,via_bank,note
+INS01,AG Insurance,Home & fire (Top Woning),"[""P01"", ""P02""]","Leuvenselaan 112, Tienen",684.2,yearly,2026-11-14,A01,False,
+INS02,Ethias,Car insurance (BA + omnium),"[""P01""]",Skoda Octavia 2022,91.35,monthly,2027-04-01,A01,False,Omnium on 4.5-year-old car: value declining
+INS03,DKV Belgium,Hospitalisation (family),"[""P01"", ""P02"", ""P05"", ""P06""]",,58.2,monthly,2027-01-01,A01,False,Arne covered as dependant; employer also offers group cover
+INS04,NovaLife,Mortgage protection (schuldsaldo),"[""P01"", ""P02""]",Loan L01,412.0,yearly,2027-06-01,A01,True,
+INS05,AG Insurance,Home & fire,"[""P03"", ""P04""]","Schaffensestraat 45, Diest",512.4,yearly,2027-02-20,A10,False,
+INS06,NovaBank Card Insurance,Travel & purchase protection (Mastercard Gold),"[""P01"", ""P02""]",Card C05,0,included,,A07,True,

@@ -1,0 +1,9 @@
+case_id,person_id,date,channel,topic,resolution,duration_min,sentiment,handled_by
+CS01,P03,2025-11-06,branch,Card PIN forgotten,New PIN letter sent,25,neutral,Branch Diest
+CS02,P02,2025-12-29,chat,How to cancel a card subscription (Disney+),Explained - merchant must cancel; offered card-subscription view,9,slightly_negative,Chatbot -> agent
+CS03,P01,2026-03-11,phone,Can I see my parents' savings and set up meals on wheels payment?,"Proxy scope explained; view on A11/A12, pay only from A10",18,neutral,Contact center
+CS04,P01,2026-06-17,phone,Fraud - parents targeted by fake bank employee,"Device revoked, beneficiary removed, credentials reset; nothing lost",41,stressed_then_relieved,Fraud desk
+CS05,P03,2026-06-18,branch,Follow-up after fraud attempt; wants 'something simpler',Suggested lowering transfer limit to 1000 EUR; accepted,35,anxious,Branch Diest
+CS06,P06,2026-03-02,chat,Locked out after wrong PIN,Unlocked via itsme,6,neutral,Chatbot
+CS07,P05,2026-09-03,chat,How much can I borrow for an apartment with 20k own funds?,Referred to mortgage advisor; no appointment booked yet,11,positive,Chatbot -> agent
+CS08,P04,2026-09-24,branch,Asked what 'HealthPlus' charges are - doesn't recognise them,Open: dispute form to be signed; Koen to assist,30,confused,Branch Diest

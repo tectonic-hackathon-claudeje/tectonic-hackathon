@@ -1,0 +1,9 @@
+doc_id,person_ids,type,title,issued,related,read
+DOC01,"[""P01""]",tax_certificate,Fiscaal attest pensioensparen 2025,2026-02-10,A05,True
+DOC02,"[""P02""]",tax_certificate,Fiscaal attest pensioensparen 2025,2026-02-10,A06,False
+DOC03,"[""P01"", ""P02""]",tax_certificate,Attest woonkrediet 2025 (interest & capital),2026-02-14,L01,True
+DOC04,"[""P01"", ""P02""]",annual_statement,Jaaroverzicht kosten & rente 2025,2026-01-31,A01,False
+DOC05,"[""P03"", ""P04""]",annual_statement,Jaaroverzicht 2025,2026-01-31,A10,False
+DOC06,"[""P03"", ""P04""]",maturity_notice,Termijnrekening vervalt 15/11/2026 - uw keuze,2026-09-15,A12,False
+DOC07,"[""P05""]",investment_report,Kwartaalrapport ETF-plan Q2 2026,2026-07-08,A23,True
+DOC08,"[""P01"", ""P02""]",loan_notice,Autolening: nog 6 aflossingen,2026-09-05,L02,False

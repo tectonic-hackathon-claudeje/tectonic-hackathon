@@ -1,0 +1,29 @@
+account_id,person_id,access_role,permissions,granted_on
+A01,P01,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2000-01-10
+A01,P02,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2000-01-10
+A02,P01,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2003-06-02
+A02,P02,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2003-06-02
+A03,P01,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",1998-09-01
+A04,P02,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2001-05-14
+A05,P01,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2004-01-15
+A06,P02,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2006-03-01
+A07,P01,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2012-04-01
+A08,P01,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2016-02-01
+A08,P02,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2016-02-01
+A10,P03,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",1968-02-01
+A10,P04,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",1968-02-01
+A10,P01,proxy_mandate,"[""view"", ""pay"", ""transfer_to_known_beneficiaries""]",2024-05-06
+A11,P03,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",1975-01-01
+A11,P04,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",1975-01-01
+A11,P01,proxy_view_only,"[""view""]",2024-05-06
+A12,P03,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2023-11-15
+A12,P04,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2023-11-15
+A12,P01,proxy_view_only,"[""view""]",2024-05-06
+A20,P05,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2020-02-14
+A21,P05,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2021-09-01
+A22,P05,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2024-03-01
+A23,P05,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2024-01-10
+A30,P06,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2023-09-15
+A30,P02,shared_view,"[""view_balance"", ""view_transactions""]",2023-09-20
+A30,P01,shared_view,"[""view_balance"", ""view_transactions""]",2023-09-20
+A31,P06,owner,"[""view"", ""pay"", ""transfer"", ""manage_cards"", ""manage_settings""]",2005-11-01

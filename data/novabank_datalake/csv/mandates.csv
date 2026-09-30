@@ -1,0 +1,3 @@
+mandate_id,grantor_ids,grantee_id,accounts,mandate_type,scope,signed_on,signed_at,valid_until,notes
+MD01,"[""P03"", ""P04""]",P01,"[""A10"", ""A11"", ""A12""]",bank_proxy (volmacht),"A10: view + payments up to 2,500 EUR/tx to known beneficiaries; A11/A12: view only",2024-05-06,Branch NovaBank Diest,,Set up after Jozef's hospital stay in spring 2024
+MD02,"[""P06""]",P02,"[""A30""]",account_sharing (view),balance + transactions view,2023-09-20,In-app,,Lotte shared with both parents when she moved into her kot

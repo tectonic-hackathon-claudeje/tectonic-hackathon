@@ -1,0 +1,7 @@
+person_id,language,push_enabled,email_enabled,marketing_consent,data_insights_consent,household_view_consent,font_size,simplified_mode
+P01,nl,True,True,False,True,True,default,False
+P02,nl,True,False,True,True,True,default,False
+P03,nl,True,False,False,True,True,large,False
+P04,nl,False,False,False,True,True,large,False
+P05,nl,True,True,True,True,False,default,False
+P06,nl,True,False,True,True,True,default,False

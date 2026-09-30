@@ -1,0 +1,5 @@
+goal_id,owner_ids,account_id,name,target_amount,target_date,current_amount,created,status
+G01,"[""P05""]",A21,Apartment down payment,45000,2027-12-31,29912.5,2024-09-01,active
+G02,"[""P01"", ""P02""]",A02,Emergency buffer (6 months),24000,,30198.5,2019-01-10,active
+G03,"[""P06""]",A31,Erasmus Lisbon,2500,2027-02-01,4080.0,2026-09-18,active
+G04,"[""P01"", ""P02""]",A02,Summer holiday 2027,3500,2027-06-30,0,,suggested_not_created

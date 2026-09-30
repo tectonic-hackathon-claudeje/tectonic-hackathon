@@ -1,0 +1,12 @@
+relationship_id,person_id,related_person_id,relation,since
+R01,P01,P02,spouse,1999-08-21
+R02,P01,P03,child_of,
+R03,P01,P04,child_of,
+R04,P03,P04,spouse,1966-04-16
+R05,P05,P01,child_of,
+R06,P05,P02,child_of,
+R07,P06,P01,child_of,
+R08,P06,P02,child_of,
+R09,P05,P06,sibling,
+R10,P05,P03,grandchild_of,
+R11,P06,P03,grandchild_of,

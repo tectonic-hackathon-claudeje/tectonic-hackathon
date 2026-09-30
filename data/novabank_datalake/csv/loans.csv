@@ -1,0 +1,3 @@
+loan_id,debit_account_id,borrowers,loan_type,principal,annual_rate,rate_type,term_months,start_date,end_date,monthly_installment,outstanding_at_snapshot,remaining_installments,purpose,collateral,linked_insurance
+L01,A01,"[""P01"", ""P02""]",mortgage,245000,0.0235,fixed,300,2014-06-01,2039-05-01,1080.7,141953.67,152,"Purchase house Leuvenselaan 112, Tienen",Mortgage registration on property,Schuldsaldoverzekering NovaLife (50/50)
+L02,A01,"[""P01"", ""P02""]",car_loan,21500,0.0349,fixed,60,2022-04-05,2027-03-05,391.03,2322.46,6,Skoda Octavia Combi (2022),none,

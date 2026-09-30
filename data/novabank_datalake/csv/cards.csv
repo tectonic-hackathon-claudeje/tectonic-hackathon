@@ -1,0 +1,11 @@
+card_id,account_id,holder_id,card_kind,brand,pan_masked,expiry,status,contactless_enabled,online_payments_enabled,abroad_enabled_regions,weekly_limit,mobile_wallet
+C01,A01,P01,debit,Bancontact/Maestro,6703 XXXX XXXX 8104,07/27,active,True,True,"[""EU"", ""WORLD""]",2500,google_pay
+C02,A01,P02,debit,Bancontact/Maestro,5100 XXXX XXXX 2486,09/30,active,True,True,"[""EU"", ""WORLD""]",2500,none
+C03,A03,P01,debit,Bancontact/Debit Mastercard,6703 XXXX XXXX 3028,04/27,active,True,True,"[""EU"", ""WORLD""]",2500,google_pay
+C04,A04,P02,debit,Bancontact/Debit Mastercard,4871 XXXX XXXX 1812,04/27,active,True,True,"[""EU"", ""WORLD""]",2500,none
+C05,A07,P01,credit,Mastercard Gold,5100 XXXX XXXX 5744,07/28,active,True,True,"[""EU"", ""WORLD""]",2500,google_pay
+C10,A10,P03,debit,Bancontact/Maestro,6703 XXXX XXXX 6054,09/28,active,True,True,"[""EU""]",1000,none
+C11,A10,P04,debit,Bancontact/Maestro,6703 XXXX XXXX 4078,06/27,active,True,False,"[""EU""]",500,none
+C20,A20,P05,debit,Bancontact/Debit Mastercard,6703 XXXX XXXX 1976,10/28,active,True,True,"[""EU"", ""WORLD""]",2500,apple_pay
+C21,A22,P05,credit,Visa Classic,4871 XXXX XXXX 9711,07/29,active,True,True,"[""EU"", ""WORLD""]",2500,apple_pay
+C30,A30,P06,debit,Bancontact/Debit Mastercard,4871 XXXX XXXX 8424,06/29,active,True,True,"[""EU"", ""WORLD""]",2500,apple_pay

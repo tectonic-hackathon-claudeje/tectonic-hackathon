@@ -1,0 +1,18 @@
+account_id,iban,iban_formatted,account_type,product_name,owners,holding,nickname,currency,opened_date,interest_rate,overdraft_limit,opening_balance_at_window_start,status,household_id,balance_at_snapshot,maturity_date
+A01,BE05735210033175,BE05 7352 1003 3175,current,NovaPlus Joint Current Account,"[""P01"", ""P02""]",joint,Household account,EUR,2000-01-10,0.0,1500,4250.0,active,H01,8667.4,
+A02,BE54735210888997,BE54 7352 1088 8997,savings,NovaSave Regulated Savings,"[""P01"", ""P02""]",joint,Emergency buffer,EUR,2003-06-02,0.0125,0,21480.0,active,H01,30198.5,
+A03,BE06735211599222,BE06 7352 1159 9222,current,NovaPlus Current Account,"[""P01""]",individual,Koen personal,EUR,1998-09-01,0.0,500,1840.0,active,H01,9049.98,
+A04,BE66735212416143,BE66 7352 1241 6143,current,NovaPlus Current Account,"[""P02""]",individual,Els personal,EUR,2001-05-14,0.0,500,3310.0,active,H01,8314.01,
+A05,BE91735213234276,BE91 7352 1323 4276,pension_savings,NovaPension Fund (pensioensparen),"[""P01""]",individual,Koen pension saving,EUR,2004-01-15,,0,38650.0,active,H01,41956.13,
+A06,BE85735213964406,BE85 7352 1396 4406,pension_savings,NovaPension Fund (pensioensparen),"[""P02""]",individual,Els pension saving,EUR,2006-03-01,,0,29120.0,active,H01,31863.13,
+A07,BE98735214758893,BE98 7352 1475 8893,credit_card,NovaCard Mastercard Gold,"[""P01""]",individual,Koen credit card,EUR,2012-04-01,0.1199,0,0.0,active,H01,-543.0,
+A08,BE11735215627348,BE11 7352 1562 7348,investment,NovaInvest Portfolio (joint),"[""P01"", ""P02""]",joint,Long-term investing,EUR,2016-02-01,,0,0.0,active,H01,62257.88,
+A10,BE19735216390012,BE19 7352 1639 0012,current,NovaBasic Joint Current Account,"[""P03"", ""P04""]",joint,Pa & Ma zichtrekening,EUR,1968-02-01,0.0,0,3860.0,active,H02,6220.1,
+A11,BE41735217136710,BE41 7352 1713 6710,savings,NovaSave Regulated Savings,"[""P03"", ""P04""]",joint,Pa & Ma spaarrekening,EUR,1975-01-01,0.0125,0,41230.0,active,H02,53045.38,
+A12,BE84735217956459,BE84 7352 1795 6459,term_deposit,NovaTerm 3y Term Deposit,"[""P03"", ""P04""]",joint,Termijnrekening,EUR,2023-11-15,0.0275,0,25000.0,active,H02,25000.0,2026-11-15
+A20,BE64735218770552,BE64 7352 1877 0552,current,NovaYoung Current Account,"[""P05""]",individual,Arne,EUR,2020-02-14,0.0,0,1640.0,active,H01,11779.85,
+A21,BE51735219508762,BE51 7352 1950 8762,savings,NovaSave Regulated Savings,"[""P05""]",individual,Apartment fund,EUR,2021-09-01,0.0125,0,14200.0,active,H01,29912.5,
+A22,BE59735220387826,BE59 7352 2038 7826,credit_card,NovaCard Visa Classic,"[""P05""]",individual,Arne credit card,EUR,2024-03-01,0.1199,0,0.0,active,H01,-62.05,
+A23,BE29735221138564,BE29 7352 2113 8564,investment,NovaInvest ETF Plan,"[""P05""]",individual,Arne ETF plan,EUR,2024-01-10,,0,0.0,active,H01,5758.19,
+A30,BE28735221900420,BE28 7352 2190 0420,current,NovaStudent Current Account,"[""P06""]",individual,Lotte,EUR,2023-09-15,0.0,0,212.0,active,H01,311.57,
+A31,BE76735222674295,BE76 7352 2267 4295,savings,NovaSave Regulated Savings,"[""P06""]",individual,Lotte savings,EUR,2005-11-01,0.0125,0,2310.0,active,H01,4080.0,

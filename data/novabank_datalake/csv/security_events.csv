@@ -1,0 +1,10 @@
+event_id,person_id,timestamp,type,detail,source
+SE01,P03,2026-06-17T13:58:40,incoming_call_reported_after,Caller claimed to be NovaBank security; asked to install remote-support app,support_call
+SE02,P03,2026-06-17T14:12:03,login_new_device,"D05, IP geolocated outside BE, remote-desktop tool signature",auth
+SE03,P03,2026-06-17T14:19:55,beneficiary_added,"LT IBAN, name mismatch",payments
+SE04,P03,2026-06-17T14:22:08,transaction_blocked,"T001483 -4850 EUR, risk score 0.97",fraud_engine
+SE05,P01,2026-06-17T14:22:40,proxy_alert_sent,Push to Koen (proxy) about blocked transfer on A10,notifications
+SE06,P03,2026-06-17T15:05:12,device_revoked_password_reset,Done by fraud desk after Koen called,support
+SE07,P06,2026-03-02T01:14:22,failed_login_x3,"Wrong PIN, same trusted device",auth
+SE08,P04,2026-07-03T10:41:00,card_online_first_use,"C11 first ever online payment, merchant GB",fraud_engine_low_risk
+SE09,P05,2026-05-20T21:03:11,3ds_challenge_passed,Brussels Airlines,auth

@@ -1,0 +1,3 @@
+ext_id,person_id,provider,account_type,iban,balance_at_snapshot,consent_expires
+X01,P05,Revolut,current (PSD2-linked),LT000000000000000000 (masked),412.8,2026-12-01
+X02,P01,Employer group insurance (AG),"occupational pension (read-only, via mypension.be export)",,61240.0,
