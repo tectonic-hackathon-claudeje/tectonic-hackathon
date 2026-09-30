@@ -16,6 +16,7 @@ export function ChatPanel({
   speaker,
   picks,
   onPick,
+  focusKey,
   notice,
   msgs,
   chips,
@@ -28,6 +29,8 @@ export function ChatPanel({
   speaker: { kind: "policy" | "cover" | "group"; label: string; sub?: string; glyph: string };
   picks: Pick[];
   onPick: (id: string) => void;
+  /** Changes whenever something asks for the cursor to go into this chat ("Ask" on a danger). */
+  focusKey?: number;
   /** With nothing inspected: a short reply under the bar when no insurance matched the question. */
   notice?: { text: string; actions: Action[] } | null;
   msgs: Msg[];
@@ -40,6 +43,10 @@ export function ChatPanel({
 }) {
   const [q, setQ] = useState("");
   const list = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (focusKey) box.current?.querySelector("input")?.focus();
+  }, [focusKey]);
   // Scroll the conversation itself, never the page.
   useEffect(() => {
     const el = list.current;
@@ -63,7 +70,7 @@ export function ChatPanel({
   // Nothing inspected: choose who to talk to, or just ask and the right insurance answers.
   if (speaker.kind === "group")
     return (
-      <section className="cw-chat cw-chat-pick" aria-label="Talk to an insurance">
+      <section ref={box} className="cw-chat cw-chat-pick" aria-label="Talk to an insurance">
         <header className="cw-chat-head">
           <span className="cw-sam"><PixelIcon id="fraud" size={18} ink="#ffffff" accent="#ffffff" /></span>
           <span className="cw-who">
@@ -102,7 +109,7 @@ export function ChatPanel({
 
   const started = msgs.length > 0;
   return (
-    <section className={`cw-chat${started ? " cw-chat-open" : ""}`} aria-label={`Chat with ${speaker.label}`}>
+    <section ref={box} className={`cw-chat${started ? " cw-chat-open" : ""}`} aria-label={`Chat with ${speaker.label}`}>
       <header className="cw-chat-head">
         <span className="cw-sam"><PixelIcon id={speaker.glyph} size={18} ink="#ffffff" accent="#ffffff" /></span>
         <span className="cw-who">

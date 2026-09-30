@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AccessLevel, Asset } from "@/lib/insurance/ego";
 import { KBC } from "@/lib/insurance/kbc";
 import type { Status } from "@/lib/insurance/model";
@@ -24,6 +24,8 @@ export function OfferCard({
   onAdd,
   onRespond,
   onUndo,
+  onInsure,
+  proxy,
 }: {
   gap: Asset;
   age: number;
@@ -34,8 +36,11 @@ export function OfferCard({
   onAdd: (cover: string) => void;
   onRespond: (gapId: string, reply: Reply) => void;
   onUndo: (gapId: string) => void;
+  onInsure?: (gapId: string) => void;
+  proxy?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState(false);
   const covers = KBC.products.find((p) => p.id === gap.kbcId)?.covers;
   if (response)
     return (
@@ -47,7 +52,19 @@ export function OfferCard({
   return (
     <div className="cw-offer2">
       <p className="cw-offer-line">{gap.story?.line}</p>
+      {confirm && gap.product ? (
+        <div className="cw-confirm" role="group" aria-label="Confirm">
+          <p><strong>{gap.product.name}</strong></p>
+          <p>{priceLine(gap, age)}</p>
+          <p className="cw-muted">{proxy ? `${name} still has to confirm this themselves.` : "Nothing is really bought: this is a demo."}</p>
+          <div className="cw-offer-actions">
+            <button type="button" className="cw-primary" onClick={() => onInsure?.(gap.id)}>Confirm</button>
+            <button type="button" onClick={() => setConfirm(false)}>Not now</button>
+          </div>
+        </div>
+      ) : null}
       <div className="cw-offer-actions">
+        {canAct && onInsure && gap.product && !confirm ? <button type="button" className="cw-primary" onClick={() => setConfirm(true)}>Get covered</button> : null}
         <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? "Hide the cover" : "See the cover"}</button>
         {canAct && gap.coverId ? (
           <button type="button" aria-pressed={added} onClick={() => onAdd(gap.coverId as string)}>{added ? "✓ Added" : "Add to proposal"}</button>
@@ -160,6 +177,11 @@ export function Panel({
   onUndoRespond,
   requested,
   onRequestAccess,
+  onInsure,
+  onAsk,
+  celebrate,
+  onUndoCelebrate,
+  dangers,
 }: {
   asset: Asset;
   state: Asset["state"];
@@ -186,8 +208,18 @@ export function Panel({
   onUndoRespond: (gapId: string) => void;
   requested: boolean;
   onRequestAccess: () => void;
+  onInsure: (gapId: string) => void;
+  onAsk: (a: Asset) => void;
+  celebrate: { text: string } | null;
+  onUndoCelebrate: () => void;
+  dangers: { scenario: string; outcome: string }[];
 }) {
   const isPerson = asset.kind === "person";
+  // When a danger has just been avoided, show the news at the top.
+  const top = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (celebrate) top.current?.scrollTo({ top: 0 });
+  }, [celebrate]);
   const tagline = gap ? gap.story?.headline : asset.kind === "policy" || asset.kind === "product" || asset.kind === "property" ? (state === "neutral" ? "Not needed right now" : STATE_WORD[state as Status]) : asset.kind === "category" || asset.kind === "group" ? asset.caption : undefined;
   const renews = asset.facts.find((f) => f.k === "Renews")?.v;
   const good = goodToKnow(asset, lookup);
@@ -204,16 +236,22 @@ export function Panel({
   const first = stories.slice(0, 3);
   const rest = stories.slice(3);
   const row = (a: Asset) => (
-    <li key={a.id}>
+    <li key={a.id} className="cw-look-row">
       <button type="button" className="cw-look" onClick={() => onOpenStory(a)}>
         <PixelIcon id={a.glyph} size={22} />
         <span>{a.story?.headline}</span>
       </button>
+      <button type="button" className="cw-ask" onClick={() => onAsk(a)} aria-label={`Ask about: ${a.story?.headline}`}>Ask</button>
     </li>
   );
 
   return (
-    <div className="cw-info">
+    <div className="cw-info" ref={top}>
+      {celebrate ? (
+        <p className="cw-avoided" role="status">
+          <span aria-hidden="true">✓</span> {celebrate.text} <button type="button" onClick={onUndoCelebrate}>Undo</button>
+        </p>
+      ) : null}
       {banner && isPerson ? (
         <p className={`cw-banner cw-banner-${level}`}>
           {banner}
@@ -235,7 +273,7 @@ export function Panel({
 
       {stories.length > 0 ? (
         <>
-          <p className="cw-label">Things to look at</p>
+          <p className="cw-label">Dangers to look at</p>
           <ul className="cw-looks" aria-label={`Things to look at for ${personName}`}>
             {first.map(row)}
             {rest.length > 0 ? (
@@ -268,8 +306,19 @@ export function Panel({
         </div>
       ) : null}
 
+      {gap && gap.story && dangers.length > 0 ? (
+        <>
+          <p className="cw-label">What could happen</p>
+          <ul className="cw-cov cw-cov-no">
+            {dangers.slice(0, 4).map((d) => (
+              <li key={d.scenario}><span aria-hidden="true">!</span><div><strong>{d.scenario}</strong><small>Nothing pays for this today.</small></div></li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
       {gap && gap.story ? (
-        <OfferCard gap={gap} age={age} name={personName} canAct={canAct} proposal={proposal} response={responses[gap.id]} onAdd={onToggleProposal} onRespond={onRespond} onUndo={onUndoRespond} />
+        <OfferCard gap={gap} age={age} name={personName} canAct={canAct} proposal={proposal} response={responses[gap.id]} onAdd={onToggleProposal} onRespond={onRespond} onUndo={onUndoRespond} onInsure={onInsure} proxy={level === "proxy"} />
       ) : null}
 
       {(asset.kind === "policy" || viaPolicy?.kind === "policy") && (state === "covered" || state === "shared") ? (

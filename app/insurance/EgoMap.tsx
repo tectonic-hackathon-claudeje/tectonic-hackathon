@@ -405,6 +405,12 @@ export function EgoMap({ scene, selectedId, relatedIds, onSelect, onOpen }: EgoM
           strokeDasharray={n.state === "gap" ? "4 4" : n.state === "upcoming" ? "1 5" : undefined}
           strokeLinecap="round"
         />
+        {(n.badge || ((n.state === "gap" || n.state === "upcoming") && !n.info)) ? (
+          <g aria-hidden="true">
+            <circle cx={cx + (size + 20) / 2 - 2} cy={top + size / 2 + 2 - (size + 20) / 2 + 2} r={n.large ? 11 : 9} fill={n.state === "upcoming" ? "var(--soon)" : "var(--gap)"} stroke="var(--bg)" strokeWidth={2} />
+            <text x={cx + (size + 20) / 2 - 2} y={top + size / 2 + 2 - (size + 20) / 2 + 2 + (n.large ? 4 : 3.5)} textAnchor="middle" fill="#0a1120" fontSize={n.large ? 12 : 11} fontWeight={800}>{n.badge ?? "!"}</text>
+          </g>
+        ) : null}
         <PixelGlyph id={n.glyph} x={cx - size / 2} y={top + 2} size={size} ink={inPlace ? "#ffffff" : n.state === "neutral" || n.info ? "var(--ink)" : color} accent={inPlace ? "color-mix(in srgb, #ffffff 55%, var(--accent))" : n.state === "neutral" || n.info ? "var(--accent)" : color} />
         <text x={cx} y={top + size + 30} textAnchor="middle" fill="var(--ink)" fontSize={big ? 15 : 12.5} fontWeight={700}>{clip(n.label, big ? 22 : 20)}</text>
         <text x={cx} y={top + size + (big ? 47 : 44)} textAnchor="middle" fill={n.state === "gap" || n.state === "upcoming" ? color : "var(--muted)"} fontSize={big ? 11 : 9.5}>{clip(n.caption, big ? 30 : 27)}</text>

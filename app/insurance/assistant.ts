@@ -13,7 +13,8 @@ export type Action =
   | { kind: "link"; label: string; href: string }
   | { kind: "call"; label: string }
   | { kind: "add"; label: string; covers: string[] }
-  | { kind: "respond"; label: string; gapId: string; reply: Reply };
+  | { kind: "respond"; label: string; gapId: string; reply: Reply }
+  | { kind: "insure"; label: string; gapId: string };
 
 /**
  * What an answer can do. `navigate` moves the map on its own when one place clearly matches (the
@@ -177,6 +178,8 @@ export function answer(question: string, ctx: Context): Answer {
     const g = ego.assets[speaker.assetId];
     const kp = KBC.products.find((p) => p.id === (g?.kbcId ?? g?.id.replace(/^kbc:/, "")));
     if (g && kp) {
+      if (g.kind === "gap" && /(^|\b)(yes|get covered|insure|sign me up|let'?s do it|go ahead|i want (you|this)|take you)\b/.test(q) && !/\b(no|not|don'?t)\b/.test(q))
+        return { text: "This is a demo, so nothing is really bought. Shall I put myself in place?", actions: [{ kind: "insure", label: "Yes, get covered (demo)", gapId: g.id }] };
       if (/cover|include|pay for|what would you|what do you|do for me/.test(q) && !/not/.test(q)) return { text: `I would cover ${kp.covers.charAt(0).toLowerCase()}${kp.covers.slice(1)}. I\u2019m not in place for you, so right now I cover nothing.`, actions: [] };
       if (/cost|price|much|cheap/.test(q)) return { text: priceLine(g, ageOf(g.personIds[0])), actions: [] };
       if (/why|reason|on my list|seeing you|here/.test(q) && g.story) return { text: `You\u2019re seeing me because of this: ${g.story.line.charAt(0).toLowerCase()}${g.story.line.slice(1)} It\u2019s your call. I\u2019m easy to ignore.`, actions: [] };

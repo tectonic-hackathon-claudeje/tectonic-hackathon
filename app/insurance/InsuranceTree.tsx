@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { forViewer } from "@/lib/insurance/access";
 import { alertsFor } from "@/lib/insurance/alerts";
+import { applyInsured } from "@/lib/insurance/insure";
 import type { AccessLevel, Asset, EgoModel } from "@/lib/insurance/ego";
 import { KBC } from "@/lib/insurance/kbc";
 import type { InsuranceModel } from "@/lib/insurance/model";
@@ -27,11 +28,16 @@ const ACCESS_WORD: Record<AccessLevel, string> = { self: "", joint: "", proxy: "
 
 export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson }: { model: InsuranceModel; ego: EgoModel; initialTheme: Theme; initialPerson: string }) {
   // The world as this viewer may see it: one place decides what is hidden.
-  const ego = useMemo<EgoModel>(() => {
+  const egoBase = useMemo<EgoModel>(() => {
     const me = egoRaw.assets[`person:${VIEWER}`];
     const named = me ? { ...egoRaw, assets: { ...egoRaw.assets, [me.id]: { ...me, label: "Me", caption: "" } } } : egoRaw;
     return forViewer(named, VIEWER);
   }, [egoRaw]);
+  // Covers taken out in this session (demo: nothing is really bought).
+  const [insured, setInsured] = useState<string[]>([]);
+  const [celebrate, setCelebrate] = useState<{ text: string; gapId: string } | null>(null);
+  const [chatFocus, setChatFocus] = useState(0);
+  const ego = useMemo(() => applyInsured(egoBase, insured), [egoBase, insured]);
   const levelOf = useCallback((id: string): AccessLevel => egoRaw.access[VIEWER]?.[id] ?? "none", [egoRaw]);
 
   const [theme, setTheme] = useState<Theme>(initialTheme);
@@ -140,6 +146,30 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
   const addCovers = useCallback((covers: string[]) => setProposal((cur) => [...new Set([...cur, ...covers])]), []);
   const respond = useCallback((gapId: string, reply: Reply) => setResponses((r) => ({ ...r, [gapId]: reply })), []);
   const undoRespond = useCallback((gapId: string) => setResponses((r) => Object.fromEntries(Object.entries(r).filter(([k]) => k !== gapId))), []);
+  // Getting covered: the danger goes, the asset is insured, and you land on the new policy.
+  const insureGap = useCallback(
+    (gapId: string) => {
+      const gap = ego.assets[gapId];
+      if (!gap) return;
+      const property = gap.related.map((r) => ego.assets[r.id]).find((a) => a?.kind === "property");
+      const newId = `pol:new:${gapId}`;
+      setInsured((cur) => (cur.includes(gapId) ? cur : [...cur, gapId]));
+      setCelebrate({ text: `Danger avoided: ${property ? property.label : gap.label} is now insured.`, gapId });
+      setTrail((t) => t.map((st) => (st.kind === "asset" && st.id === gapId ? { kind: "asset", id: newId } : st)));
+      setSelectedId(null);
+      setThreads((all) => ({ ...all, [newId]: [{ id: `m-ins-${gapId}`, role: "assistant", text: `I\u2019m in place now${property ? ` for ${property.label}` : ""}. Ask me what I pay for, and when I don\u2019t.`, from: { label: `KBC ${gap.product?.name?.replace(/^KBC /, "") ?? gap.label}`, glyph: gap.glyph } }] }));
+    },
+    [ego],
+  );
+  const undoInsure = useCallback(() => {
+    if (!celebrate) return;
+    const { gapId } = celebrate;
+    setInsured((cur) => cur.filter((x) => x !== gapId));
+    setTrail((t) => t.map((st) => (st.kind === "asset" && st.id === `pol:new:${gapId}` ? { kind: "asset", id: gapId } : st)));
+    setSelectedId(null);
+    setCelebrate(null);
+  }, [celebrate]);
+
   const proposalNodes = proposal.map((id) => nodesById.get(id)).filter((n): n is NonNullable<typeof n> => Boolean(n));
   const monthly = proposalNodes.reduce((s, n) => s + n.product.monthly, 0);
 
@@ -261,6 +291,7 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
     else if (a.kind === "call") {
       addMsgs(speakerKey, [{ id: id(), role: "assistant", text: `Done: I\u2019ve asked your advisor to call you (this is a demo, so nothing is sent). You can carry on here meanwhile.`, from: { label: speaker.label, glyph: speaker.glyph } }]);
     } else if (a.kind === "respond") respond(a.gapId, a.reply);
+    else if (a.kind === "insure") insureGap(a.gapId);
   };
   const undoNav = (msgId: string) => {
     const m = Object.values(threads).flat().find((x) => x.id === msgId);
@@ -275,6 +306,10 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
       .map((a) => ({ id: a.id, label: a.label, glyph: a.glyph, inPlace: true })),
     ...alerts.mine.filter((a) => a.kind === "gap").slice(0, 3).map((a) => ({ id: a.id, label: a.label, glyph: a.glyph, inPlace: false })),
   ];
+  const askAbout = (a: Asset) => {
+    openAlert(a);
+    setChatFocus((n) => n + 1);
+  };
   const pick = (assetId: string) => {
     const a = ego.assets[assetId];
     if (!a) return;
@@ -453,10 +488,16 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
                 onUndoRespond={undoRespond}
                 requested={requested.includes(personId)}
                 onRequestAccess={() => setRequested((r) => [...r, personId])}
+                onInsure={insureGap}
+                onAsk={askAbout}
+                celebrate={celebrate && (shown.id === `pol:new:${celebrate.gapId}` || shown.kind === "property") ? celebrate : null}
+                onUndoCelebrate={undoInsure}
+                dangers={gap ? (Object.values(ego.assets).find((a) => a.kind === "policy" && a.coverId && a.coverId === gap.coverId)?.scenarios?.pays ?? []) : []}
               />
               <ChatPanel
                 speaker={speaker}
                 picks={picks}
+                focusKey={chatFocus}
                 onPick={pick}
                 notice={speaker.kind === "group" ? notice : null}
                 msgs={msgs}
@@ -469,7 +510,7 @@ export function InsuranceTree({ model, ego: egoRaw, initialTheme, initialPerson 
                   const g = ego.assets[gapId];
                   if (!g) return null;
                   const who = g.personIds[0];
-                  return <OfferCard gap={g} age={ageOf(who)} name={nameOf(who)} canAct={canActFor(who)} proposal={proposal} response={responses[g.id]} onAdd={toggleProposal} onRespond={respond} onUndo={undoRespond} />;
+                  return <OfferCard gap={g} age={ageOf(who)} name={nameOf(who)} canAct={canActFor(who)} proposal={proposal} response={responses[g.id]} onAdd={toggleProposal} onRespond={respond} onUndo={undoRespond} onInsure={insureGap} proxy={levelOf(who) === "proxy"} />;
                 }}
               />
             </aside>

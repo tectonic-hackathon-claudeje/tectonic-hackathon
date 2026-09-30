@@ -15,6 +15,8 @@ export type SceneNode = {
   large?: boolean;
   /** In a family tree: this is the centre person's spouse, placed beside them. */
   spouse?: boolean;
+  /** A small count on the picture: how many dangers sit here. */
+  badge?: string;
 };
 export type Side = "n" | "e" | "s" | "w" | "s2" | "ne" | "nw" | "se" | "sw";
 /** `bare` territories hold one picture with its label above it, without a frame. */
@@ -62,7 +64,7 @@ function pseudo(id: string, kind: Asset["kind"], label: string, caption: string,
   return { id, kind, label, caption, glyph, state: "neutral", personIds: [], roles: {}, personState: {}, detail, facts, source, related, links: [] };
 }
 
-type Category = { id: string; label: string; glyph: string; assetIds: string[]; state: AssetState; caption: string; detail: string };
+type Category = { id: string; label: string; glyph: string; assetIds: string[]; state: AssetState; caption: string; detail: string; badge?: string };
 
 /** A product as this person sees it: theirs, through family, missing, coming up, or simply on offer. */
 function productState(ego: EgoModel, personId: string, p: KbcProduct): AssetState {
@@ -142,6 +144,7 @@ function insuranceCategories(ego: EgoModel, personId: string, onlyOpen = false):
         // Words, not counts: what should the reader do about this?
         caption: onlyOpen ? `${open.length} to look at` : gaps + soon > 0 ? `${gaps + soon} to look at` : have > 0 ? "Covered" : "Nothing needed",
         detail: `${have} of ${products.length} in place.`,
+        badge: onlyOpen ? (open.length > 0 ? String(open.length) : undefined) : gaps + soon > 0 ? String(gaps + soon) : undefined,
       };
     })
     .filter((c) => (onlyOpen ? c.assetIds.length > 0 : true));
@@ -230,7 +233,7 @@ export function personScene(ego: EgoModel, personId: string): Scene {
   cats.forEach((c, i) => {
     const id = `cat:insurance:${c.id}`;
     details[id] = categoryPseudo(ego, personId, "insurance", c);
-    territories.push({ id: `cat-${c.id}`, label: c.label, side: SIDES[i % SIDES.length], bare: true, nodes: [{ id, label: c.label, caption: c.caption, glyph: c.glyph, state: c.state, large: true }] });
+    territories.push({ id: `cat-${c.id}`, label: c.label, side: SIDES[i % SIDES.length], bare: true, nodes: [{ id, label: c.label, caption: c.caption, glyph: c.glyph, state: c.state, large: true, badge: c.badge }] });
   });
 
   for (const g of GROUPS) {

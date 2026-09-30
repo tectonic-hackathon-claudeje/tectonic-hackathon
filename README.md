@@ -51,3 +51,10 @@ A person-centred map of the mock NovaBank family: the four KBC insurance categor
 ### Talking to the insurance itself
 
 Every insurance has its own conversation, in its own KBC-branded frame, when you inspect it: "KBC Car Insurance" says "I pay when you back into a parked car, I don't when the gearbox breaks", and "KBC Hospitalisation" is a separate chat with its own history. A cover you do not have speaks for itself ("I'm not in place for you, nothing is decided"). With nothing inspected there is no shared helper: you pick which insurance to talk to. A question that is another insurance's job is handed over, and that insurance answers it in its own thread. Every voice is labelled "AI voice" so it is never mistaken for the insurer. The situations come from `data/scenarios.csv` (sample text; the real conditions decide).
+
+### The four screen captures
+
+1. **Overview, traversing the tree:** `/insurance` → click Home → "Your homes" → Zeedijk 120 → the policy. The breadcrumb and ← go back up; every level zooms smoothly.
+2. **Dangers on assets:** category tiles carry a count badge and uninsured assets an "!" badge. Opening Zeedijk 120 shows "What could happen" (fire, storm, burst pipe, lightning: nothing pays today).
+3. **Danger overview + ask the agent:** the "Dangers to look at" list has an **Ask** on every danger. It opens that insurance's own chat with the cursor ready, or use "Talk to an insurance" to pick one.
+4. **Danger avoided, asset insured:** on the danger, **Get covered → Confirm** (a demo, nothing is bought). The tile turns solid, the bell count drops, the page lands on the new policy with "Danger avoided" and an Undo.

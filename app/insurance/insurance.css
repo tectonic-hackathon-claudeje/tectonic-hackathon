@@ -375,3 +375,16 @@ html[data-theme="dark"] .skip-link { color: var(--accent-ink); }
 .cw-chat-pick form { margin-top: 0.2rem; }
 .cw-notice { margin: 0 1.25rem 0.7rem; padding: 0.6rem 0.8rem; border-radius: 4px 14px 14px 4px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--bg)); font: 0.92rem/1.4 system-ui, sans-serif; }
 .cw-notice p { margin: 0; }
+
+/* Dangers, asking about them, and getting covered */
+.cw-look-row { display: flex; align-items: center; gap: 0.3rem; }
+.cw-look-row .cw-look { flex: 1; min-width: 0; }
+.cw-ask { flex: none; padding: 0.25rem 0.7rem; border-radius: 999px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); font: 700 0.75rem system-ui, sans-serif; cursor: pointer; }
+.cw-ask:hover { background: var(--accent); color: var(--accent-ink); }
+.cw-cov-no li > span.cw-x { border-color: var(--gap); }
+.cw-primary { background: var(--accent) !important; border-color: var(--accent) !important; color: var(--accent-ink) !important; }
+.cw-confirm { margin: 0 0 0.7rem; padding: 0.7rem 0.8rem; border-radius: 12px; border: 1.5px solid var(--accent); background: var(--surface); font-size: 0.92rem; line-height: 1.4; }
+.cw-confirm p { margin: 0 0 0.4rem; }
+.cw-avoided { display: flex; align-items: center; gap: 0.6rem; margin: 0 0 0.8rem !important; padding: 0.65rem 0.85rem; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font: 600 0.92rem system-ui, sans-serif; }
+.cw-avoided > span { display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%; background: rgb(255 255 255 / 0.25); }
+.cw-avoided button { margin-left: auto; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
