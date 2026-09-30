@@ -1,0 +1,167 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --ink: #1a1c18;
+  --muted: #44483d;
+  --line: #c8cbbf;
+  --accent: #1f4d3a;
+  --accent-ink: #ffffff;
+  --focus: #0b57d0;
+  --radius: 12px;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html:focus-within {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -3rem;
+  z-index: 10;
+  padding: 0.5rem 0.75rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
+.site-header,
+.site-footer,
+.site-main {
+  width: min(72rem, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1.5rem;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.site-nav a {
+  color: var(--accent);
+}
+
+.site-main {
+  padding-bottom: 3rem;
+}
+
+.lede {
+  max-width: 40rem;
+  color: var(--muted);
+}
+
+.product-list {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  list-style: none;
+}
+
+@media (min-width: 40rem) {
+  .product-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-card:hover {
+  border-color: var(--accent);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.product-card h2,
+.product-detail h1 {
+  margin: 0;
+}
+
+.meta {
+  margin: 0;
+  color: var(--muted);
+}
+
+.highlights {
+  margin: 1rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--accent);
+}
+
+.site-footer {
+  padding-block: 1.5rem 2.5rem;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+
+.disclaimer {
+  font-size: 0.875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+}

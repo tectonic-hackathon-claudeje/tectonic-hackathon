@@ -1,0 +1,114 @@
+[
+  {
+    "id": "home-insurance",
+    "name": "Home insurance",
+    "category": "insurance",
+    "shortDescription": "Cover for your home and belongings after fire, storm, or water damage.",
+    "description": "Mock home insurance for a house or apartment. Use this card to prototype comparison, eligibility, and plain-language explanations.",
+    "highlights": [
+      "Building and contents cover",
+      "Storm and water damage",
+      "Optional theft add-on"
+    ],
+    "whoItIsFor": "Homeowners and tenants who want a clear overview of what is covered.",
+    "typicalPrice": "From €18 / month (mock)"
+  },
+  {
+    "id": "car-insurance",
+    "name": "Car insurance",
+    "category": "insurance",
+    "shortDescription": "Civil liability, with optional comprehensive cover for your vehicle.",
+    "description": "Mock motor insurance with a simple split between legal minimum cover and extra protection. Designed for accessible product comparison.",
+    "highlights": [
+      "Third-party liability",
+      "Optional own-damage cover",
+      "Roadside assistance add-on"
+    ],
+    "whoItIsFor": "Drivers looking for a straightforward car policy explanation.",
+    "typicalPrice": "From €32 / month (mock)"
+  },
+  {
+    "id": "family-insurance",
+    "name": "Family civil liability",
+    "category": "insurance",
+    "shortDescription": "Protection if you or a family member accidentally cause damage to others.",
+    "description": "Mock family insurance focused on everyday accidents at home, school, or leisure. Useful for explaining liability in plain language.",
+    "highlights": [
+      "Covers household members",
+      "Damage to third parties",
+      "Legal assistance option"
+    ],
+    "whoItIsFor": "Families who want a simple safety net for everyday accidents.",
+    "typicalPrice": "From €8 / month (mock)"
+  },
+  {
+    "id": "hospital-insurance",
+    "name": "Hospitalisation insurance",
+    "category": "insurance",
+    "shortDescription": "Help with hospital bills that go beyond standard health insurance.",
+    "description": "Mock hospitalisation product for explaining deductibles, room choice, and pre/post hospital costs without real pricing engines.",
+    "highlights": [
+      "Hospital stay contribution",
+      "Single room option",
+      "Pre- and post-care window"
+    ],
+    "whoItIsFor": "People who want to understand extra medical costs before they happen.",
+    "typicalPrice": "From €21 / month (mock)"
+  },
+  {
+    "id": "current-account",
+    "name": "Current account",
+    "category": "banking",
+    "shortDescription": "Everyday payments, transfers, and a debit card in one place.",
+    "description": "Mock current account used to visualise fees, included services, and digital banking basics.",
+    "highlights": [
+      "SEPA transfers",
+      "Debit card included",
+      "Mobile app access (mock)"
+    ],
+    "whoItIsFor": "Anyone who needs a daily spending account.",
+    "typicalPrice": "€0–€5 / month (mock)"
+  },
+  {
+    "id": "savings-account",
+    "name": "Savings account",
+    "category": "banking",
+    "shortDescription": "Set money aside with a simple, visible interest rate.",
+    "description": "Mock regulated-style savings account for showing interest, availability of funds, and how savings sit next to insurance products.",
+    "highlights": [
+      "Instant access",
+      "Base + fidelity rate (mock)",
+      "No lock-in period"
+    ],
+    "whoItIsFor": "People who want a rainy-day buffer without investment risk.",
+    "typicalPrice": "0.50% base rate (mock)"
+  },
+  {
+    "id": "home-loan",
+    "name": "Home loan",
+    "category": "lending",
+    "shortDescription": "Borrow to buy or renovate a home, with a clear repayment picture.",
+    "description": "Mock mortgage product for visualising duration, fixed vs variable rate, and related insurances such as outstanding balance cover.",
+    "highlights": [
+      "Fixed or variable rate",
+      "Terms from 10 to 25 years",
+      "Linked protection products"
+    ],
+    "whoItIsFor": "Prospective buyers comparing monthly cost and related cover.",
+    "typicalPrice": "From 3.20% APR (mock)"
+  },
+  {
+    "id": "investment-plan",
+    "name": "Investment plan",
+    "category": "investing",
+    "shortDescription": "Regular contributions into a diversified mock fund mix.",
+    "description": "Mock investment plan for explaining risk levels, time horizon, and why this is different from a savings account.",
+    "highlights": [
+      "Monthly contributions",
+      "Risk profiles 1–5",
+      "Long-term horizon"
+    ],
+    "whoItIsFor": "People who can leave money invested for several years.",
+    "typicalPrice": "From €50 / month (mock)"
+  }
+]
